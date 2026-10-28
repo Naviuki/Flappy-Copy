@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4354f62fe6c6fc4f9cbb65f847fe90f, type: 3}
+  m_Name: PipeSettings
+  m_EditorClassIdentifier: FlappyCopy.Runtime::FlappyCopy.Data.PipeSettings
+  pipeWidth: 1.5
+  capHeight: 0.5
+  capOverhang: 0.12
+  baseGap: 4.6
+  minimumGap: 2.2
+  gapCenterRange: {x: -2.4, y: 2.7}
+  maximumHeightStep: 0.45
+  pipeColor: {r: 0.3, g: 0.76, b: 0.31, a: 1}
+  capColor: {r: 0.23, g: 0.63, b: 0.25, a: 1}
+  outlineColor: {r: 0.09, g: 0.25, b: 0.1, a: 1}

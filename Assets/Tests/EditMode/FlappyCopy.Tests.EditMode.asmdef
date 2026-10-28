@@ -1,0 +1,23 @@
+{
+    "name": "FlappyCopy.Tests.EditMode",
+    "rootNamespace": "FlappyCopy.Tests",
+    "references": [
+        "FlappyCopy.Runtime",
+        "FlappyCopy.Editor",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "UnityEditor.TestRunner",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

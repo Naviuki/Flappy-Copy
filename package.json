@@ -1,0 +1,11 @@
+{
+  "name": "flappy-copy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unity 2D Flappy Bird style game with a command line test harness",
+  "scripts": {
+    "tests": "powershell -NoProfile -ExecutionPolicy Bypass -File Tools/run_editmode_tests.ps1",
+    "build": "Tools\\build_windows.bat",
+    "validate": "Tools\\validate_project.bat"
+  }
+}

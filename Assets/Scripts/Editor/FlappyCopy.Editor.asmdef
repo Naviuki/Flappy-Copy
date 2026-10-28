@@ -1,0 +1,21 @@
+{
+    "name": "FlappyCopy.Editor",
+    "rootNamespace": "FlappyCopy.EditorTools",
+    "references": [
+        "FlappyCopy.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,51 @@
+# Unity generated folders
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Bb]uilds/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+/[Bb]uild/
+/[Bb]uildOutput/
+/Gradle/
+/.gradle/
+/ExportedObj/
+/.vs/
+/_TypeCheck/
+/UIElementsSchema/
+
+# Unity generated project files
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+!/.vsconfig
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Crash reports
+sysinfo.txt
+*.stackdump
+crashlytics-build.properties
+
+# Python (CLI harness caches)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/

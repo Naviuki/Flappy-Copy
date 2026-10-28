@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 018ce91f15ed0754cbbf7928a9826af2, type: 3}
+  m_Name: PlayerSettings
+  m_EditorClassIdentifier: FlappyCopy.Runtime::FlappyCopy.Data.PlayerSettings
+  gravityScale: 2.4
+  flapVelocity: 6.2
+  maximumFallSpeed: 14
+  maximumUpAngle: 32
+  maximumDownAngle: -75
+  tiltResponsiveness: 9
+  startPosition: {x: -1.6, y: 1.2}
+  idleBobAmplitude: 0.18
+  idleBobSpeed: 1.6
+  velocityIncreasePerPoint: 0.05
+  maximumVelocityIncrease: 3.5
+  gapShrinkPerPoint: 0.035
+  minimumGapMultiplier: 0.66
