@@ -6,13 +6,13 @@ namespace FlappyCopy.Tests
 {
     /// <summary>
     /// Starts the EditMode suite through Unity's TestRunner API from a scripted, windowed editor session and
-    /// writes Temp/harness/editmode_results.json (+ .log): each check is a [Test] method of this project's
+    /// writes Logs/harness/editmode_results.json (+ .log): each check is a [Test] method of this project's
     /// fixtures, so the scene checks run on the main thread with the real Test Runner.
     /// Called by Tools/run_tests.bat (Unity must run without -batchmode).
     /// </summary>
     public static class TestRunnerEntry
     {
-        private const string ResultsDefault = "Temp/harness/editmode_results";
+        private const string ResultsDefault = "Logs/harness/editmode_results";
 
         public static void RunEditModeAndExit()
         {

@@ -19,7 +19,7 @@ namespace FlappyCopy.Tests
     /// the pipe run/recycling, the pass-through rule, difficulty and gap placement, bird kinematics, camera
     /// framing, scroll wrap and the HUD rules.
     /// </summary>
-    public sealed class LogicTests
+    public static class LogicTests
     {
         // ------------------------------------------------------------------ state machine
 

@@ -10,11 +10,11 @@ namespace FlappyCopy.Tests
     /// <summary>
     /// Editor entry point for the EditMode checks (CI and the CLI harness): runs every real [Test] method
     /// of the project's test fixtures, prints one PASS/FAIL line per test and writes
-    /// Temp/harness/editmode_results.json plus a .log. Optional: "-testFilter &lt;name part&gt;".
+    /// Logs/harness/editmode_results.json plus a .log. Optional: "-testFilter &lt;name part&gt;".
     /// </summary>
     public static class EditModeTestEntry
     {
-        private const string ResultsPath = "Temp/harness/editmode_results";
+        private const string ResultsPath = "Logs/harness/editmode_results";
 
         [MenuItem("Flappy Copy/Checks/Run EditMode Tests")]
         public static void RunFromMenu()
