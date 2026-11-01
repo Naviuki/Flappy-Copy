@@ -62,6 +62,7 @@ namespace FlappyCopy.EditorTools
             RequireRef(issues, game, "bird", "GameController.bird");
             RequireRef(issues, game, "pipeSpawner", "GameController.pipeSpawner");
             RequireRef(issues, game, "ground", "GameController.ground");
+            RequireRef(issues, game, "audioService", "GameController.audioService");
 
             var hud = UnityEngine.Object.FindAnyObjectByType<UI.HudController>();
             if (hud == null)
@@ -72,6 +73,13 @@ namespace FlappyCopy.EditorTools
             {
                 RequireRef(issues, hud, "game", "HudController.game");
                 RequireRef(issues, hud, "view", "HudController.view");
+                var hudSerialized = new SerializedObject(hud);
+                var hudView = hudSerialized.FindProperty("view")?.objectReferenceValue;
+                if (hudView != null)
+                {
+                    RequireRef(issues, hudView, "soundButton", "HudView.soundButton");
+                    RequireRef(issues, hudView, "soundLabel", "HudView.soundLabel");
+                }
             }
 
             var spawner = UnityEngine.Object.FindAnyObjectByType<Core.GameController>()?.GetComponentInChildren<Pipes.PipeSpawner>();
@@ -105,6 +113,12 @@ namespace FlappyCopy.EditorTools
                 {
                     issues.Add("Bird prefab lost its BirdController");
                 }
+
+                var birdHitbox = bird.GetComponent<Collider2D>();
+                if (birdHitbox == null || !birdHitbox.isTrigger)
+                {
+                    issues.Add("Bird prefab needs a trigger collider on the root (the relay listens there)");
+                }
             }
 
             var pipe = AssetDatabase.LoadAssetAtPath<GameObject>(ProjectPaths.PipePairPrefabPath);
@@ -114,10 +128,20 @@ namespace FlappyCopy.EditorTools
             }
             else
             {
-                Transform top = pipe.transform.Find("TopHitbox");
-                if (top == null || top.GetComponent<BoxCollider2D>() == null)
+                foreach (string hitboxName in new[] { "TopHitbox", "BottomHitbox" })
                 {
-                    issues.Add("Pipe prefab lost its top hitbox (rebuild the prefabs)");
+                    Transform hitbox = pipe.transform.Find(hitboxName);
+                    var collider = hitbox != null ? hitbox.GetComponent<BoxCollider2D>() : null;
+                    if (collider == null || !collider.isTrigger)
+                    {
+                        issues.Add("Pipe prefab lost its " + hitboxName + " trigger (rebuild the prefabs)");
+                    }
+                    
+                }
+
+                if (pipe.GetComponent<Pipes.PipePassGate>() == null && pipe.GetComponentInChildren<Pipes.PipePassGate>(true) == null)
+                {
+                    issues.Add("Pipe prefab lost its score gate");
                 }
             }
 

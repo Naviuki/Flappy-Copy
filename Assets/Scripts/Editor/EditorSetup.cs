@@ -57,9 +57,15 @@ namespace FlappyCopy.EditorTools
                 Debug.LogError("[FlappyCopy] Prepare: " + problem);
             }
 
+            var issues = ProjectValidator.Validate();
+            foreach (string issue in issues)
+            {
+                Debug.LogError("[FlappyCopy] Prepare: " + issue);
+            }
+
             ProjectChecks.Describe();
-            Debug.Log("[FlappyCopy] Prepare finished. TMP=" + tmp + ", problems=" + problems.Count);
-            EditorApplication.Exit(tmp && problems.Count == 0 ? 0 : 1);
+            Debug.Log("[FlappyCopy] Prepare finished. TMP=" + tmp + ", problems=" + (problems.Count + issues.Count));
+            EditorApplication.Exit(tmp && problems.Count == 0 && issues.Count == 0 ? 0 : 1);
         }
 
         public static void ExtractTmpPackageAndExit()

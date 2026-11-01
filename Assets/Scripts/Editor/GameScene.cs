@@ -139,6 +139,9 @@ namespace FlappyCopy.EditorTools
             SetPrivate(game, "pipeSpawner", spawner);
             SetPrivate(game, "ground", groundScroller);
 
+            var audioService = gameObject.AddComponent<Audio.AudioService>();
+            SetPrivate(game, "audioService", audioService);
+
             BuildHud(game);
         }
 
@@ -302,6 +305,21 @@ namespace FlappyCopy.EditorTools
             TMP_Text restartLabel = Label("Label", restartObject, Vector2.zero, 64f, Color.white, fill: true);
             restartLabel.text = "RESTART";
 
+            // Sound toggle: top right corner of the 9:16 frame, visible in the menu and on the result panel.
+            GameObject soundObject = UiObject("SoundButton", device);
+            var soundRect = soundObject.GetComponent<RectTransform>();
+            soundRect.anchorMin = new Vector2(1f, 1f);
+            soundRect.anchorMax = new Vector2(1f, 1f);
+            soundRect.pivot = new Vector2(1f, 1f);
+            soundRect.anchoredPosition = new Vector2(-40f, -40f);
+            soundRect.sizeDelta = new Vector2(300f, 90f);
+            var soundImage = soundObject.AddComponent<Image>();
+            soundImage.color = new Color(1f, 1f, 1f, 0.18f);
+            var soundButton = soundObject.AddComponent<Button>();
+            soundButton.targetGraphic = soundImage;
+            TMP_Text soundLabel = Label("Label", soundObject, Vector2.zero, 44f, Color.white, fill: true);
+            soundLabel.text = "SOUND  ON";
+
             var view = canvasObject.AddComponent<HudView>();
             SetPrivate(view, "scoreText", scoreText);
             SetPrivate(view, "bestMenuText", menuBest);
@@ -312,6 +330,8 @@ namespace FlappyCopy.EditorTools
             SetPrivate(view, "hudPanel", hudPanel);
             SetPrivate(view, "gameOverPanel", gameOverPanel);
             SetPrivate(view, "restartButton", restartButton);
+            SetPrivate(view, "soundButton", soundButton);
+            SetPrivate(view, "soundLabel", soundLabel);
 
             var controller = canvasObject.AddComponent<HudController>();
             SetPrivate(controller, "view", view);

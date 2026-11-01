@@ -1,11 +1,16 @@
 #if FLAPPYCOPY_SELF_TEST
+using System.Collections.Generic;
+using FlappyCopy.Core;
+using FlappyCopy.Pipes;
 using UnityEngine;
 
 namespace FlappyCopy.Testing
 {
     /// <summary>
     /// Self-test hook of the dedicated test build (FLAPPYCOPY_SELF_TEST): starts a runner that checks the
-    /// loaded game scene and quits with the result. A normal build compiles none of this code.
+    /// loaded game scene, plays one short run without flapping (the bird must fall into the ground and the run
+    /// must end), writes the report next to the player and quits with 0 when everything passed.
+    /// A normal build compiles none of this code.
     /// </summary>
     public static class SelfTestBootstrap
     {
@@ -25,10 +30,18 @@ namespace FlappyCopy.Testing
         }
     }
 
-    /// <summary>Waits a few frames, runs the checks, writes the report and quits with 0 when they all pass.</summary>
+    /// <summary>Waits a few frames, runs the checks, plays one run, writes the report and quits.</summary>
     public sealed class SelfTestRunner : MonoBehaviour
     {
+        private const float RunLimitSeconds = 10f;
+
+        private readonly List<string> lines = new List<string>();
         private int frame;
+        private int failures;
+        private bool checksDone;
+        private bool pipesSeen;
+        private bool finished;
+        private float runStartedAt = -1f;
 
         private void Awake()
         {
@@ -38,58 +51,148 @@ namespace FlappyCopy.Testing
         private void Update()
         {
             frame++;
-            if (frame < 5)
+            if (frame < 5 || finished)
             {
                 return;
             }
 
-            enabled = false;
-            Log("running checks");
-            string report = "failures=0\n";
-            int failures = 0;
-            failures += Run(ref report, "GameControllerHasEveryReference", SelfTestChecks.GameControllerHasEveryReference);
-            failures += Run(ref report, "HudIsWiredToTheGame", SelfTestChecks.HudIsWiredToTheGame);
-            failures += Run(ref report, "BirdPrefabIsTriggerOnThePlayerLayer", SelfTestChecks.BirdPrefabIsTriggerOnThePlayerLayer);
-            failures += Run(ref report, "PipePairPrefabIsTriggerOnThePipeLayer", SelfTestChecks.PipePairPrefabIsTriggerOnThePipeLayer);
-            failures += Run(ref report, "LayersSortingLayersAndCollisions", SelfTestChecks.LayersSortingLayersAndCollisions);
-            report = report.Replace("failures=0", "failures=" + failures);
-            SelfTestReport.Write(report);
+            if (!checksDone)
+            {
+                checksDone = true;
+                RunChecks();
+                GameController game = FindGame();
+                if (game == null)
+                {
+                    FinishRun(false, "no GameController");
+                    return;
+                }
+
+                game.RequestPress();
+                runStartedAt = Time.realtimeSinceStartup;
+                return;
+            }
+
+            GameController controller = FindGame();
+            if (controller == null)
+            {
+                FinishRun(false, "the GameController disappeared");
+                return;
+            }
+
+            if (!pipesSeen && FindObjectsByType<PipePair>().Length > 0)
+            {
+                pipesSeen = true;
+            }
+
+            float elapsed = Time.realtimeSinceStartup - runStartedAt;
+            if (controller.State == GameState.GameOver)
+            {
+                FinishRun(true, "the run ended after " + elapsed.ToString("F2") + "s");
+                return;
+            }
+
+            if (elapsed > RunLimitSeconds)
+            {
+                FinishRun(false, "the bird was still flying after " + RunLimitSeconds + "s without flaps");
+            }
+        }
+
+        private static GameController FindGame()
+        {
+            return FindAnyObjectByType<GameController>();
+        }
+
+        private void RunChecks()
+        {
+            failures += Run("GameControllerHasEveryReference", SelfTestChecks.GameControllerHasEveryReference);
+            failures += Run("HudIsWiredToTheGame", SelfTestChecks.HudIsWiredToTheGame);
+            failures += Run("BirdPrefabIsTriggerOnThePlayerLayer", SelfTestChecks.BirdPrefabIsTriggerOnThePlayerLayer);
+            failures += Run("PipePairPrefabIsTriggerOnThePipeLayer", SelfTestChecks.PipePairPrefabIsTriggerOnThePipeLayer);
+            failures += Run("LayersSortingLayersAndCollisions", SelfTestChecks.LayersSortingLayersAndCollisions);
+        }
+
+        private void FinishRun(bool crashed, string detail)
+        {
+            failures += crashed ? Pass("RunStartsAndFallsIntoTheGround") : Fail("RunStartsAndFallsIntoTheGround", detail);
+            failures += pipesSeen ? Pass("PipesAreSpawned") : Fail("PipesAreSpawned", "no pipe pair appeared");
             Log("done failures=" + failures);
+            finished = true;
+
+            var report = new System.Text.StringBuilder();
+            report.Append("failures=").Append(failures).AppendLine();
+            foreach (string line in lines)
+            {
+                report.AppendLine(line);
+            }
+
+            SelfTestReport.Write(report.ToString());
             Application.Quit(failures == 0 ? 0 : 1);
+        }
+
+        private int Pass(string name)
+        {
+            lines.Add("PASS " + name);
+            return 0;
+        }
+
+        private int Fail(string name, string detail)
+        {
+            lines.Add("FAIL " + name + " :: " + detail);
+            Debug.LogError("[FlappyCopy.SelfTest] FAIL " + name + " :: " + detail);
+            return 1;
+        }
+
+        private int Run(string name, System.Action check)
+        {
+            try
+            {
+                check();
+                return Pass(name);
+            }
+            catch (System.Exception exception)
+            {
+                return Fail(name, exception.Message);
+            }
         }
 
         private static void Log(string message)
         {
             Debug.Log("[FlappyCopy.SelfTest] " + message);
-            SelfTestReport.Write("progress: " + message + "\n");
-        }
-
-        private static int Run(ref string report, string name, System.Action check)
-        {
-            try
-            {
-                check();
-                report += "PASS " + name + "\n";
-                return 0;
-            }
-            catch (System.Exception exception)
-            {
-                report += "FAIL " + name + " :: " + exception.Message + "\n";
-                return 1;
-            }
+            SelfTestReport.Append("progress: " + message);
         }
     }
 
-    /// <summary>Writes the self-test report into the project's Temp folder (the working directory of the player).</summary>
+    /// <summary>Writes the self-test output next to the test player, so a headless run can be inspected.</summary>
     public static class SelfTestReport
     {
+        /// <summary>Folder of the player executable (Application.dataPath is "&lt;player&gt;_Data").</summary>
+        private static string ReportPath
+        {
+            get
+            {
+                string root = System.IO.Path.GetDirectoryName(Application.dataPath)
+                              ?? System.IO.Directory.GetCurrentDirectory();
+                return System.IO.Path.Combine(root, "selftest_output.txt");
+            }
+        }
+
         public static void Write(string text)
         {
             try
             {
-                string path = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Temp", "scenechecks.txt");
-                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path) ?? "Temp");
-                System.IO.File.WriteAllText(path, text);
+                System.IO.File.WriteAllText(ReportPath, text);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError("self-test report: " + exception.Message);
+            }
+        }
+
+        public static void Append(string line)
+        {
+            try
+            {
+                System.IO.File.AppendAllText(ReportPath, line + System.Environment.NewLine);
             }
             catch (System.Exception exception)
             {

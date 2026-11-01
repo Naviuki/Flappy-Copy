@@ -1,15 +1,14 @@
 using System.IO;
 using UnityEditor;
-using UnityEngine;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEngine;
 
 namespace FlappyCopy.EditorTools
 {
     /// <summary>
-    /// Builds a separate self-test player (Builds/SelfTest) that runs the runtime scene checks on its own main
-    /// thread and writes Temp/scenechecks.txt before it quits. Define FLAPPYCOPY_SELF_TEST exists only in that
-    /// test build. On machines where the editor cannot create MonoBehaviour components reliably (this one), it
-    /// is also the independent confirmation that the game scene and prefabs are healthy.
+    /// Builds a separate self-test player (Builds/SelfTest) that checks the game scene at runtime and writes
+    /// Temp/scenechecks.txt before it quits. The define FLAPPYCOPY_SELF_TEST exists only in that test build.
     /// </summary>
     public static class SelfTestBuild
     {
@@ -41,11 +40,11 @@ namespace FlappyCopy.EditorTools
             Directory.CreateDirectory(Path.GetDirectoryName(Output) ?? "Builds");
             PlayerSetup.Apply();
 
-            string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
+            string symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
             bool added = !symbols.Contains(Define);
             if (added)
             {
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,
+                PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone,
                     string.IsNullOrEmpty(symbols) ? Define : symbols + ";" + Define);
             }
 
@@ -68,7 +67,7 @@ namespace FlappyCopy.EditorTools
             {
                 if (added)
                 {
-                    PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, symbols);
+                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, symbols);
                 }
             }
         }

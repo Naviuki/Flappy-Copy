@@ -27,7 +27,10 @@ namespace FlappyCopy.EditorTools
             "Assets/Scripts/UI/PortraitHudScaler.cs",
             "Assets/Scripts/UI/DeviceRect.cs",
             "Assets/Scripts/World/InfinityGround.cs",
-            "Assets/Scripts/Cameras/PortraitFraming.cs"
+            "Assets/Scripts/Cameras/PortraitFraming.cs",
+            "Assets/Scripts/Audio/SfxId.cs",
+            "Assets/Scripts/Audio/SfxLibrary.cs",
+            "Assets/Scripts/Audio/SoundPreference.cs"
         };
 
         [MenuItem("Flappy Copy/Repair Assets")]

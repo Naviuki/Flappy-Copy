@@ -45,6 +45,9 @@ namespace FlappyCopy.EditorTools
         private const float BodyWidth = 0.5f;
         private const float BodyHeight = 0.42f;
 
+        /// <summary>Radius of the bird's trigger hitbox (the body sprite is 0.5 x 0.42).</summary>
+        public const float BodyRadius = 0.21f;
+
         public static void CreateAll()
         {
             ProjectPaths.EnsureFolder(ProjectPaths.PrefabsFolder);
@@ -69,10 +72,14 @@ namespace FlappyCopy.EditorTools
             Transform bottomCap = Part("BottomCap", root.transform, SortingLayers.Order(SortingLayers.Pipes), -capWidth * 0.5f,
                 0f, capWidth, settings.CapHeight, cap);
 
-            // The hitboxes are sized/placed every time the pair is activated (see PipePair.Layout).
-            new GameObject("TopHitbox").transform.SetParent(root.transform, false);
-            new GameObject("BottomHitbox").transform.SetParent(root.transform, false);
-            root.AddComponent<CollisionRelay>();
+            // The hitboxes are sized/placed every time the pair is activated (see PipePair.Layout). Both are
+            // trigger colliders so the bird reports a crash on contact without the pipes pushing it around.
+            BoxCollider2D topHitbox = new GameObject("TopHitbox").AddComponent<BoxCollider2D>();
+            topHitbox.transform.SetParent(root.transform, false);
+            topHitbox.isTrigger = true;
+            BoxCollider2D bottomHitbox = new GameObject("BottomHitbox").AddComponent<BoxCollider2D>();
+            bottomHitbox.transform.SetParent(root.transform, false);
+            bottomHitbox.isTrigger = true;
             GameScene.SetLayerRecursively(root, ProjectLayers.Pipe);
 
             PipePassGate gate = GameScene.AddGate(root.transform);
@@ -86,6 +93,7 @@ namespace FlappyCopy.EditorTools
 
             PrefabUtility.SaveAsPrefabAsset(root, ProjectPaths.PipePairPrefabPath);
             Object.DestroyImmediate(root);
+            MirrorForSelfTest(ProjectPaths.PipePairPrefabPath, "PipePair");
         }
 
         private static void CreateBird()
@@ -106,9 +114,6 @@ namespace FlappyCopy.EditorTools
             Transform bodyTransform = Part("Body", visual, SortingLayers.Order(SortingLayers.Player), -BodyWidth * 0.5f,
                 -BodyHeight * 0.5f, BodyWidth, BodyHeight,
                 world != null ? world.BirdColor : new Color(0.99f, 0.83f, 0.15f, 1f));
-            var collider = bodyTransform.gameObject.AddComponent<CircleCollider2D>();
-            collider.radius = 0.5f;
-            collider.isTrigger = true;
 
             Part("Belly", visual, SortingLayers.Order(SortingLayers.Player) + 1, -0.19f, -0.14f, 0.26f, 0.2f,
                 new Color(1f, 0.95f, 0.78f, 1f));
@@ -120,6 +125,11 @@ namespace FlappyCopy.EditorTools
             Part("Pupil", visual, SortingLayers.Order(SortingLayers.Player) + 5, 0.09f, 0.06f, 0.05f, 0.05f,
                 new Color(0.1f, 0.1f, 0.12f, 1f));
 
+            // One trigger on the root: the Rigidbody2D lives here, so physics reports contacts here and the
+            // relay hands them to BirdController. The visual parts are sprites only.
+            var hitbox = root.AddComponent<CircleCollider2D>();
+            hitbox.radius = BodyRadius;
+            hitbox.isTrigger = true;
             root.AddComponent<CollisionRelay>();
             var bird = root.AddComponent<BirdController>();
             GameScene.SetPrivate(bird, "settings", settings);
@@ -128,6 +138,22 @@ namespace FlappyCopy.EditorTools
             GameScene.SetLayerRecursively(root, ProjectLayers.Player);
             PrefabUtility.SaveAsPrefabAsset(root, ProjectPaths.BirdPrefabPath);
             Object.DestroyImmediate(root);
+            MirrorForSelfTest(ProjectPaths.BirdPrefabPath, "Bird");
+        }
+
+        /// <summary>
+        /// Keeps a copy of a finished prefab under Resources/CheckPrefabs: the self-test player (a build, so no
+        /// AssetDatabase) loads it from there to check the prefab wiring. Copies are refreshed with every rebuild.
+        /// </summary>
+        private static void MirrorForSelfTest(string prefabPath, string name)
+        {
+            ProjectPaths.EnsureFolder("Assets/Resources");
+            ProjectPaths.EnsureFolder("Assets/Resources/CheckPrefabs");
+            var asset = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (asset != null)
+            {
+                PrefabUtility.SaveAsPrefabAsset(asset, "Assets/Resources/CheckPrefabs/" + name + ".prefab");
+            }
         }
 
         /// <summary>Bottom-left pivot sprite with an explicit size in world units.</summary>

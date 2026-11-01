@@ -55,6 +55,7 @@ namespace FlappyCopy.Testing
             Check(Field<Player.BirdController>(game, "bird") != null, "bird wired");
             Check(Field<Pipes.PipeSpawner>(game, "pipeSpawner") != null, "pipe spawner wired");
             Check(Field<World.InfinityGround>(game, "ground") != null, "ground wired");
+            Check(Field<Audio.AudioService>(game, "audioService") != null, "audio service wired");
         }
 
         public static void HudIsWiredToTheGame()
@@ -92,10 +93,8 @@ namespace FlappyCopy.Testing
             Check(bird.layer == Core.ProjectLayers.Player, "bird layer");
             Check(bird.GetComponent<Core.CollisionRelay>() != null, "collision relay");
             Check(bird.GetComponent<Player.BirdController>() != null, "bird controller");
-            Transform body = bird.transform.Find("Visual/Body");
-            Check(body != null, "body sprite");
-            Collider2D collider = body != null ? body.GetComponent<Collider2D>() : null;
-            Check(collider != null && collider.isTrigger, "body collider is a trigger");
+            Collider2D collider = bird.GetComponent<Collider2D>();
+            Check(collider != null && collider.isTrigger, "bird collider is a trigger on the root (the relay listens there)");
         }
 
         public static void PipePairPrefabIsTriggerOnThePipeLayer()
