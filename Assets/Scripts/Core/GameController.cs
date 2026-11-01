@@ -1,4 +1,5 @@
 using System;
+using FlappyCopy.Audio;
 using FlappyCopy.Cameras;
 using FlappyCopy.Data;
 using FlappyCopy.Input;
@@ -45,6 +46,9 @@ namespace FlappyCopy.Core
         [SerializeField] private BirdController bird;
         [SerializeField] private PipeSpawner pipeSpawner;
         [SerializeField] private InfinityGround ground;
+
+        [Header("Audio")]
+        [SerializeField] private AudioService audioService;
 
         [Header("Debug")]
         [SerializeField] private DebugSettings debugSettings;
@@ -180,6 +184,7 @@ namespace FlappyCopy.Core
                 return;
             }
 
+            Play(SfxId.Hit);
             inputSource?.Dispose();
             stateMachine.TryChange(GameState.GameOver);
         }
@@ -198,8 +203,25 @@ namespace FlappyCopy.Core
 
         bool IGameContext.TryChangeState(GameState next) => stateMachine.TryChange(next);
         void IGameContext.OnMenuEntered() { }
-        void IGameContext.OnPlayStarted() => bird.Flap();
+
+        void IGameContext.OnPlayStarted()
+        {
+            bird.Flap();
+            Play(SfxId.Flap);
+        }
+
         void IGameContext.OnGameOverEntered() => bird.OnDied();
+
+        /// <summary>Mute switch of the HUD: sound effects only, remembered between runs.</summary>
+        public bool IsMuted => audioService != null && audioService.IsMuted;
+
+        public void ToggleMute()
+        {
+            if (audioService != null)
+            {
+                audioService.ToggleMute();
+            }
+        }
 
         // ----------------------------------------------------------------- run flow
 
@@ -215,6 +237,11 @@ namespace FlappyCopy.Core
 
         private void TickPlaying(float deltaTime, bool flap)
         {
+            if (flap)
+            {
+                Play(SfxId.Flap);
+            }
+
             bird.Tick(deltaTime, flap);
 
             float speed = PipeRunMath.Speed(worldSettings.PipeSpeed, GetSpeedIncrease(scoreService.Score));
@@ -229,7 +256,16 @@ namespace FlappyCopy.Core
 
         private void RaisePointScored(int value)
         {
+            Play(SfxId.Point);
             PointScored?.Invoke(value);
+        }
+
+        private void Play(SfxId id)
+        {
+            if (audioService != null)
+            {
+                audioService.Play(id);
+            }
         }
 
         private void RaiseRunEnded(int value, bool isNewRecord)

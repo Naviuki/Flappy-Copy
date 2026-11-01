@@ -8,6 +8,7 @@ namespace FlappyCopy.Core
         public const string GameSceneName = "Game";
         public const string GameScenePath = "Assets/Scenes/Game.unity";
         public const string BestScorePrefKey = "FlappyCopy.BestScore";
+        public const string SoundEnabledPrefKey = "FlappyCopy.SoundEnabled";
         public const string ProductName = "Flappy Copy";
         public const string DisplayTitle = "FLAPPY COPY";
     }

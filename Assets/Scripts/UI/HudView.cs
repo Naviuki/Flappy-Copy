@@ -15,6 +15,7 @@ namespace FlappyCopy.UI
     public interface IHudView
     {
         event Action RestartRequested;
+        event Action SoundToggleRequested;
 
         void SetScore(int score);
         void SetBestScore(int bestScore);
@@ -24,8 +25,8 @@ namespace FlappyCopy.UI
     }
 
     /// <summary>
-    /// Thin view over the TMP texts and panels. Holds no rules: it renders what
-    /// <see cref="HudController"/> tells it and raises one restart event for the button.
+    /// Thin view over the TMP texts, the panels and the two buttons. Holds no rules: it renders what
+    /// <see cref="HudController"/> tells it and raises one event per button.
     /// </summary>
     public sealed class HudView : MonoBehaviour, IHudView
     {
@@ -43,14 +44,22 @@ namespace FlappyCopy.UI
 
         [Header("Buttons")]
         [SerializeField] private Button restartButton;
+        [SerializeField] private Button soundButton;
+        [SerializeField] private TMP_Text soundLabel;
 
         public event Action RestartRequested;
+        public event Action SoundToggleRequested;
 
         private void OnEnable()
         {
             if (restartButton != null)
             {
                 restartButton.onClick.AddListener(HandleRestartClicked);
+            }
+
+            if (soundButton != null)
+            {
+                soundButton.onClick.AddListener(HandleSoundClicked);
             }
         }
 
@@ -60,27 +69,27 @@ namespace FlappyCopy.UI
             {
                 restartButton.onClick.RemoveListener(HandleRestartClicked);
             }
+
+            if (soundButton != null)
+            {
+                soundButton.onClick.RemoveListener(HandleSoundClicked);
+            }
         }
 
         public void SetScore(int score)
         {
-            if (scoreText != null)
-            {
-                scoreText.SetText("{0}", score);
-            }
+            scoreText?.SetText("{0}", score);
         }
 
         public void SetBestScore(int bestScore)
         {
-            if (bestMenuText != null)
-            {
-                bestMenuText.SetText("BEST  {0}", bestScore);
-            }
+            bestMenuText?.SetText("BEST  {0}", bestScore);
+            resultBestText?.SetText("BEST  {0}", bestScore);
+        }
 
-            if (resultBestText != null)
-            {
-                resultBestText.SetText("BEST  {0}", bestScore);
-            }
+        public void SetSoundEnabled(bool enabled)
+        {
+            soundLabel?.SetText(enabled ? "SOUND  ON" : "SOUND  OFF");
         }
 
         public void ShowPanel(HudPanel panel)
@@ -92,11 +101,7 @@ namespace FlappyCopy.UI
 
         public void ShowRunResult(int score, int bestScore, bool isNewRecord)
         {
-            if (resultScoreText != null)
-            {
-                resultScoreText.SetText("{0}", score);
-            }
-
+            resultScoreText?.SetText("{0}", score);
             SetBestScore(bestScore);
             SetActive(newRecordText != null ? newRecordText.gameObject : null, isNewRecord);
             ShowPanel(HudPanel.GameOver);
@@ -107,10 +112,9 @@ namespace FlappyCopy.UI
             SetActive(newRecordText != null ? newRecordText.gameObject : null, false);
         }
 
-        private void HandleRestartClicked()
-        {
-            RestartRequested?.Invoke();
-        }
+        private void HandleRestartClicked() => RestartRequested?.Invoke();
+
+        private void HandleSoundClicked() => SoundToggleRequested?.Invoke();
 
         private static void SetActive(GameObject target, bool isActive)
         {

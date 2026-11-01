@@ -31,7 +31,53 @@ namespace FlappyCopy.UI
         [SerializeField] private HudView view;
         [SerializeField] private GameController game;
 
-        private void Awake()
+        private bool isSubscribed;
+
+        private void OnEnable()
+        {
+            Subscribe();
+        }
+
+        private void OnDisable()
+        {
+            Unsubscribe();
+        }
+
+        /// <summary>
+        /// Subscribes once, as soon as both references are there (the component is enabled before Unity calls
+        /// Awake, so the subscription is set up here, not in Awake, and survives being enabled again).
+        /// </summary>
+        private void Subscribe()
+        {
+            if (isSubscribed || view == null || game == null)
+            {
+                return;
+            }
+
+            game.StateChanged += HandleStateChanged;
+            game.PointScored += HandlePointScored;
+            game.RunEnded += HandleRunEnded;
+            view.RestartRequested += HandleRestartRequested;
+            view.SoundToggleRequested += HandleSoundToggleRequested;
+            isSubscribed = true;
+        }
+
+        private void Unsubscribe()
+        {
+            if (!isSubscribed)
+            {
+                return;
+            }
+
+            game.StateChanged -= HandleStateChanged;
+            game.PointScored -= HandlePointScored;
+            game.RunEnded -= HandleRunEnded;
+            view.RestartRequested -= HandleRestartRequested;
+            view.SoundToggleRequested -= HandleSoundToggleRequested;
+            isSubscribed = false;
+        }
+
+        private void Start()
         {
             if (view == null || game == null)
             {
@@ -40,32 +86,16 @@ namespace FlappyCopy.UI
                 return;
             }
 
-            game.StateChanged += HandleStateChanged;
-            game.PointScored += HandlePointScored;
-            game.RunEnded += HandleRunEnded;
-            view.RestartRequested += HandleRestartRequested;
-        }
-
-        private void Start()
-        {
+            Subscribe();
             view.SetBestScore(game.Score.BestScore);
             view.SetScore(0);
+            view.SetSoundEnabled(!game.IsMuted);
             ShowFor(game.State);
         }
 
         private void OnDestroy()
         {
-            if (game != null)
-            {
-                game.StateChanged -= HandleStateChanged;
-                game.PointScored -= HandlePointScored;
-                game.RunEnded -= HandleRunEnded;
-            }
-
-            if (view != null)
-            {
-                view.RestartRequested -= HandleRestartRequested;
-            }
+            Unsubscribe();
         }
 
         private void HandleStateChanged(GameState from, GameState to)
@@ -91,6 +121,12 @@ namespace FlappyCopy.UI
         private void HandleRestartRequested()
         {
             game.RequestPress();
+        }
+
+        private void HandleSoundToggleRequested()
+        {
+            game.ToggleMute();
+            view.SetSoundEnabled(!game.IsMuted);
         }
 
         private void ShowFor(GameState state)
