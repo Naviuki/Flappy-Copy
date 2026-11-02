@@ -5,13 +5,18 @@ using UnityEngine.UI;
 namespace FlappyCopy.UI
 {
     /// <summary>
-    /// Locks the HUD canvas to the 9:16 portrait box: the reference width stays 1080 and the reference
-    /// height follows the screen, so the HUD keeps its proportions inside the portrait frame.
+    /// Keeps the HUD canvas in units that follow the world camera: the camera always shows 16 design units of
+    /// height, and the HUD's 36-wide reference box maps onto those 9 units (4 reference units per design unit).
+    /// The 9:16 device box is therefore 1080 x 1920 reference units on every window, and elements sized in
+    /// reference units match the world's scale on phones, on 9:16 and on wide desktop windows.
     /// </summary>
     [RequireComponent(typeof(CanvasScaler))]
     [DisallowMultipleComponent]
     public sealed class PortraitHudScaler : MonoBehaviour
     {
+        private const float ReferenceUnitsPerDesignUnit =
+            DesignSpace.ReferenceWinWidth / DesignSpace.PortraitWidth / 4f;
+
         private CanvasScaler scaler;
         private int lastWidth = -1;
         private int lastHeight = -1;
@@ -33,22 +38,14 @@ namespace FlappyCopy.UI
             }
         }
 
-        /// <summary>
-        /// Reference height grows with the screen height so 1080 units always equal the visible width:
-        /// exactly 1920 on 9:16, more on taller phones, and 1920 (portrait frame) on wider screens.
-        /// </summary>
+        /// <summary>Reference size of the canvas for a screen size (see the class summary for the reasoning).</summary>
         public static Vector2 ReferenceFor(int screenWidth, int screenHeight)
         {
-            float aspect = Mathf.Max(1, screenWidth) / (float)Mathf.Max(1, screenHeight);
-            float designAspect = DesignSpace.PortraitWidth / (float)DesignSpace.PortraitHeight;
-            float height = DesignSpace.ReferenceWinHeight;
-            if (aspect < designAspect)
-            {
-                height = Mathf.Clamp(DesignSpace.ReferenceWinWidth / aspect,
-                    DesignSpace.ReferenceWinHeightMin, DesignSpace.ReferenceWinHeight);
-            }
-
-            return new Vector2(DesignSpace.ReferenceWinWidth, Mathf.Round(height));
+            float heightPixels = Mathf.Max(1, screenHeight);
+            float widthPixels = Mathf.Max(1, screenWidth);
+            float height = heightPixels / DesignSpace.PortraitHeight * ReferenceUnitsPerDesignUnit;
+            float width = widthPixels / DesignSpace.PortraitHeight * ReferenceUnitsPerDesignUnit;
+            return new Vector2(Mathf.Max(1f, Mathf.Round(width)), Mathf.Max(1f, Mathf.Round(height)));
         }
 
         private void Apply(int screenWidth, int screenHeight)

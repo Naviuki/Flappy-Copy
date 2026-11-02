@@ -91,23 +91,28 @@ namespace FlappyCopy.Pipes
             float cap = settings.CapHeight;
             float width = settings.PipeWidth;
 
+            // The pair root sits at y = 0 (screen centre). Pipe bodies run past the ground and the top of the
+            // frame so a column is never shorter than the gap: only the cap ends are visible.
+            float floor = DesignSpace.GroundTop;
+            float ceiling = DesignSpace.HalfHeight;
+
             // Pipe bodies start one cap inside the opening so the cap itself never overlaps the gap.
-            SetSpan(bottomPipe, 0f, Mathf.Max(0.01f, bottomTop - cap), width);
-            SetSpan(topPipe, topBottom + cap, Mathf.Max(0.01f, DesignSpace.PlayHalfHeight - topBottom - cap), width);
+            SetSpan(bottomPipe, floor, Mathf.Max(0.01f, bottomTop - cap - floor), width);
+            SetSpan(topPipe, topBottom + cap, Mathf.Max(0.01f, ceiling - topBottom - cap), width);
             SetSpan(bottomCap, bottomTop - cap, cap, width + (settings.CapOverhang * 2f));
             SetSpan(topCap, topBottom, cap, width + (settings.CapOverhang * 2f));
 
             if (topHitbox != null)
             {
-                topHitbox.size = new Vector2(width, Mathf.Max(0.01f, DesignSpace.PlayHalfHeight - topBottom));
-                topHitbox.offset = new Vector2(0f, (DesignSpace.PlayHalfHeight + topBottom) * 0.5f);
+                topHitbox.size = new Vector2(width, Mathf.Max(0.01f, ceiling - topBottom));
+                topHitbox.offset = new Vector2(0f, (ceiling + topBottom) * 0.5f);
             }
 
             if (bottomHitbox != null)
             {
-                float bottomHeight = Mathf.Max(0.01f, bottomTop);
+                float bottomHeight = Mathf.Max(0.01f, bottomTop - floor);
                 bottomHitbox.size = new Vector2(width, bottomHeight);
-                bottomHitbox.offset = new Vector2(0f, bottomHeight * 0.5f);
+                bottomHitbox.offset = new Vector2(0f, (bottomTop + floor) * 0.5f);
             }
 
             if (gate != null)

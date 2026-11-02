@@ -17,7 +17,7 @@ MonoBehaviour:
   capOverhang: 0.12
   baseGap: 4.6
   minimumGap: 2.2
-  gapCenterRange: {x: -2.4, y: 2.7}
+  gapCenterRange: {x: -4.7, y: 4.7}
   maximumHeightStep: 0.45
   pipeColor: {r: 0.3, g: 0.76, b: 0.31, a: 1}
   capColor: {r: 0.23, g: 0.63, b: 0.25, a: 1}

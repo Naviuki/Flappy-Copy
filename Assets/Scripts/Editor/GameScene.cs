@@ -25,7 +25,6 @@ namespace FlappyCopy.EditorTools
     /// </summary>
     public static class GameScene
     {
-        private const float GroundTop = -DesignSpace.PlayHalfHeight;
         private const float HalfRefWidth = DesignSpace.ReferenceWinWidth * 0.5f;
         private const float HalfRefHeight = DesignSpace.ReferenceWinHeight * 0.5f;
 
@@ -83,21 +82,27 @@ namespace FlappyCopy.EditorTools
             BuildClouds(background, world);
             BuildScenery(background, world);
 
+            // The ground object sits on the ground surface, so the strips hang below it down to the bottom edge.
             Transform ground = new GameObject("Ground").transform;
             ground.SetParent(gameObject.transform, false);
-            ground.localPosition = new Vector3(0f, GroundTop, 0f);
+            ground.localPosition = new Vector3(0f, DesignSpace.GroundTop, 0f);
             var strips = new Transform[2];
             for (int i = 0; i < strips.Length; i++)
             {
                 Transform strip = new GameObject("Strip " + i).transform;
                 strip.SetParent(ground, false);
-                strip.localPosition = new Vector3(i * DesignSpace.PortraitWidth, 0f, 0f);
-                Block("Grass " + i, strip, 0f, DesignSpace.GroundHeight - 0.2f, DesignSpace.PortraitWidth, 0.4f, -0.01f,
-                    world != null ? world.GrassColor : Color.green, SortingLayers.Order(SortingLayers.Ground));
-                Block("Soil " + i, strip, 0f, -0.2f, DesignSpace.PortraitWidth, DesignSpace.GroundHeight - 0.2f, 0f,
+
+                // A strip is a one-unit quad scaled to the frame width and its blocks are exactly one strip
+                // wide; the first strip starts one strip left of the frame, so both edges stay covered.
+                // InfinityGround keeps this true at runtime.
+                strip.localScale = new Vector3(DesignSpace.PortraitWidth, 1f, 1f);
+                strip.localPosition = new Vector3((i - 1) * DesignSpace.PortraitWidth, 0f, 0f);
+                Block("Soil " + i, strip, 0f, -DesignSpace.GroundHeight, 1f, DesignSpace.GroundHeight, 0f,
                     world != null ? world.SoilColor : new Color(0.8f, 0.7f, 0.5f), SortingLayers.Order(SortingLayers.Ground));
-                Block("Stripe " + i, strip, 0f, DesignSpace.GroundHeight - 0.7f, DesignSpace.PortraitWidth, 0.14f, -0.02f,
-                    world != null ? world.StripeColor : new Color(0.7f, 0.6f, 0.4f), SortingLayers.Order(SortingLayers.Ground) + 1);
+                Block("Grass " + i, strip, 0f, -0.45f, 1f, 0.45f, -0.01f,
+                    world != null ? world.GrassColor : Color.green, SortingLayers.Order(SortingLayers.Ground) + 1);
+                Block("Stripe " + i, strip, 0f, -1.1f, 1f, 0.14f, -0.02f,
+                    world != null ? world.StripeColor : new Color(0.7f, 0.6f, 0.4f), SortingLayers.Order(SortingLayers.Ground) + 2);
                 strips[i] = strip;
             }
 
@@ -105,10 +110,11 @@ namespace FlappyCopy.EditorTools
             SetPrivate(groundScroller, "worldSettings", world);
             SetPrivateArray(groundScroller, "strips", strips);
 
+            // The trigger covers the whole ground block: the bird dies when it touches the grass line.
             BoxCollider2D groundCollider = ground.gameObject.AddComponent<BoxCollider2D>();
             groundCollider.isTrigger = true;
-            groundCollider.size = new Vector2(200f, DesignSpace.GroundHeight - 0.2f);
-            groundCollider.offset = new Vector2(0f, (DesignSpace.GroundHeight - 0.2f) * 0.5f);
+            groundCollider.size = new Vector2(200f, DesignSpace.GroundHeight);
+            groundCollider.offset = new Vector2(0f, -DesignSpace.GroundHeight * 0.5f);
             ground.gameObject.AddComponent<CollisionRelay>();
             SetLayerRecursively(ground.gameObject, ProjectLayers.Ground);
             ground.gameObject.tag = ProjectLayers.GroundName;
@@ -184,6 +190,12 @@ namespace FlappyCopy.EditorTools
             spriteObject.transform.localScale = new Vector3(width, height, 1f);
             var renderer = spriteObject.AddComponent<SpriteRenderer>();
             renderer.sprite = SpriteTextures.Load(SpriteTextures.WhitePath);
+            renderer.sharedMaterial = SpriteTextures.Material();
+            if (renderer.sharedMaterial == null)
+            {
+                Debug.LogError("[FlappyCopy] The sprite material asset is missing (rebuild the textures).");
+            }
+
             renderer.color = color;
             renderer.sortingOrder = sortingOrder;
             return renderer;
@@ -215,7 +227,7 @@ namespace FlappyCopy.EditorTools
 
             Transform row = new GameObject("Scenery").transform;
             row.SetParent(background, false);
-            row.localPosition = new Vector3(0f, -4.4f, 2f);
+            row.localPosition = new Vector3(0f, DesignSpace.GroundTop, 2f);
             float[] heights = { 1.4f, 2.2f, 1f, 1.8f, 1.2f, 2.5f, 1.6f, 1.1f, 2f, 1.3f, 1.7f, 1f };
             for (int i = 0; i < heights.Length; i++)
             {
@@ -251,6 +263,9 @@ namespace FlappyCopy.EditorTools
             scaler.referenceResolution = new Vector2(DesignSpace.ReferenceWinWidth, DesignSpace.ReferenceWinHeight);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0f;
+
+            // The HUD keeps the camera's scale on every window shape (the reference size follows the screen).
+            canvasObject.AddComponent<UI.PortraitHudScaler>();
             canvasObject.AddComponent<GraphicRaycaster>();
 
             // Full-screen press area (behind everything else).

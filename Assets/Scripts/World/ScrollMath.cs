@@ -17,10 +17,19 @@ namespace FlappyCopy.World
             return wrapped < 0f ? wrapped + span : wrapped;
         }
 
-        /// <summary>X of strip <paramref name="index"/>: strips sit side by side and share the offset.</summary>
+        /// <summary>
+        /// X of strip <paramref name="index"/>. Two strips of half the frame width tile the design width
+        /// exactly, start at the left edge (or one strip before it) and share one scroll offset.
+        /// </summary>
         public static float StripX(int index, float stripWidth, float offset)
         {
             return (index * stripWidth) - Wrap(offset, stripWidth);
+        }
+
+        /// <summary>Width of one ground strip: two strips tile the 9:16 design width.</summary>
+        public static float StripWidthFor(float frameWidth)
+        {
+            return frameWidth * 0.5f;
         }
 
         /// <summary>Small multiplier for parallax layers (clouds at a quarter of the world speed).</summary>

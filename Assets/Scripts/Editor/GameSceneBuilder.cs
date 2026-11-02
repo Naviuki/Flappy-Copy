@@ -15,6 +15,9 @@ namespace FlappyCopy.EditorTools
         public const string ScenePath = "Assets/Scenes/Game.unity";
         public const string BirdPrefabPath = "Assets/Prefabs/Bird.prefab";
         public const string PipePairPrefabPath = "Assets/Prefabs/PipePair.prefab";
+        public const string MaterialsFolder = "Assets/Materials";
+        public const string SpriteMaterialName = "FlappyCopySprite";
+        public const string SpriteMaterialPath = MaterialsFolder + "/" + SpriteMaterialName + ".mat";
         public const string TestResultsPath = "Temp/harness/editmode_results.json";
         public const string TestStatePath = "Temp/harness/test_state.txt";
 

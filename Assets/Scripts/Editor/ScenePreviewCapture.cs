@@ -32,6 +32,7 @@ namespace FlappyCopy.EditorTools
             }
 
             UnityEditor.SceneManagement.EditorSceneManager.OpenScene(ProjectPaths.ScenePath);
+            EnsureLight();
             Camera camera = Camera.main;
             if (camera == null)
             {
@@ -59,6 +60,25 @@ namespace FlappyCopy.EditorTools
             Object.DestroyImmediate(target);
             Debug.Log("[FlappyCopy] Scene preview written: " + path);
             return path;
+        }
+
+        /// <summary>
+        /// Adds a light when the scene has none: the URP 2D lit material renders black without one, so a
+        /// scene without a light produces a black preview. The light is temporary and never saved.
+        /// </summary>
+        private static void EnsureLight()
+        {
+            if (Object.FindAnyObjectByType<Light>() != null)
+            {
+                return;
+            }
+
+            var lightObject = new GameObject("Preview Light");
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.intensity = 1f;
+            light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            lightObject.hideFlags = HideFlags.DontSave;
         }
     }
 }

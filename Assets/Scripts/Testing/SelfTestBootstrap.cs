@@ -34,12 +34,15 @@ namespace FlappyCopy.Testing
     public sealed class SelfTestRunner : MonoBehaviour
     {
         private const float RunLimitSeconds = 10f;
+        private const float ScreenshotAtSeconds = 0.25f;
 
         private readonly List<string> lines = new List<string>();
         private int frame;
         private int failures;
         private bool checksDone;
         private bool pipesSeen;
+        private bool shotTaken;
+        private string PanoramaPath => SelfTestReport.PathOf("result.png");
         private bool finished;
         private float runStartedAt = -1f;
 
@@ -85,6 +88,14 @@ namespace FlappyCopy.Testing
             }
 
             float elapsed = Time.realtimeSinceStartup - runStartedAt;
+
+            // One shot of the run in progress, for the docs: the HUD, the bird and the first pipe pair.
+            if (!shotTaken && elapsed >= ScreenshotAtSeconds)
+            {
+                shotTaken = true;
+                ScreenCapture.CaptureScreenshot(SelfTestReport.PathOf("gameplay.png"));
+            }
+
             if (controller.State == GameState.GameOver)
             {
                 FinishRun(true, "the run ended after " + elapsed.ToString("F2") + "s");
@@ -117,6 +128,12 @@ namespace FlappyCopy.Testing
             failures += pipesSeen ? Pass("PipesAreSpawned") : Fail("PipesAreSpawned", "no pipe pair appeared");
             Log("done failures=" + failures);
             finished = true;
+
+            // The result panel is up now: one last capture that shows the whole menu/result UI as well.
+            if (crashed && !System.IO.File.Exists(PanoramaPath))
+            {
+                ScreenCapture.CaptureScreenshot(PanoramaPath);
+            }
 
             var report = new System.Text.StringBuilder();
             report.Append("failures=").Append(failures).AppendLine();
@@ -166,15 +183,22 @@ namespace FlappyCopy.Testing
     public static class SelfTestReport
     {
         /// <summary>Folder of the player executable (Application.dataPath is "&lt;player&gt;_Data").</summary>
-        private static string ReportPath
+        private static string Folder
         {
             get
             {
-                string root = System.IO.Path.GetDirectoryName(Application.dataPath)
-                              ?? System.IO.Directory.GetCurrentDirectory();
-                return System.IO.Path.Combine(root, "selftest_output.txt");
+                return System.IO.Path.GetDirectoryName(Application.dataPath)
+                       ?? System.IO.Directory.GetCurrentDirectory();
             }
         }
+
+        /// <summary>Path of a file written next to the player executable.</summary>
+        public static string PathOf(string fileName)
+        {
+            return System.IO.Path.Combine(Folder, fileName);
+        }
+
+        private static string ReportPath => PathOf("selftest_output.txt");
 
         public static void Write(string text)
         {

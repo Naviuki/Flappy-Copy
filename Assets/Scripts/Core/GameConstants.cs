@@ -29,6 +29,11 @@ namespace FlappyCopy.Core
         public const float HalfHeight = PortraitHeight * 0.5f;
         public const float HalfWidth = PortraitWidth * 0.5f;
         public const float GroundHeight = 2f;
+
+        /// <summary>World y of the ground surface; the ground fills the bottom <see cref="GroundHeight"/> units.</summary>
+        public const float GroundTop = -HalfHeight + GroundHeight;
+
+        /// <summary>Half-height of the area the bird can fly in (from the ground surface up to the top of the frame).</summary>
         public const float PlayHalfHeight = HalfHeight - (GroundHeight * 0.5f);
         public const float DeviceWidthUnits = PortraitWidth;
         public const float CameraDistance = -10f;

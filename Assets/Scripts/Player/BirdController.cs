@@ -22,6 +22,9 @@ namespace FlappyCopy.Player
         [Header("Wiring")]
         [SerializeField] private GameController game;
 
+        /// <summary>Distance below the top edge of the frame where the bird counts as out of bounds.</summary>
+        private const float CeilingMargin = 0.25f;
+
         private Rigidbody2D body;
         private float startY;
         private float bobTime;
@@ -84,6 +87,12 @@ namespace FlappyCopy.Player
             }
 
             MoveTo(SimulateStep(transform.position, body.linearVelocity, deltaTime, settings.MaximumFallSpeed));
+
+            // The frame edge is a wall: flying out of the top ends the run.
+            if (transform.position.y >= DesignSpace.HalfHeight - CeilingMargin)
+            {
+                Crash();
+            }
         }
 
         public void Flap()
@@ -109,17 +118,23 @@ namespace FlappyCopy.Player
         /// <summary>Physics sends pipe bodies and ground here; the first hit in a run ends the run.</summary>
         public void OnCollisionEntered(Collider2D other, string layerName, Vector2 contactPoint)
         {
+            if (layerName == ProjectLayers.PipeName || layerName == ProjectLayers.GroundName)
+            {
+                Crash();
+            }
+        }
+
+        /// <summary>Ends the run once: the vertical speed is kept so the bird keeps falling.</summary>
+        private void Crash()
+        {
             if (game == null || hasCrashedCurrentRun)
             {
                 return;
             }
 
-            if (layerName == ProjectLayers.PipeName || layerName == ProjectLayers.GroundName)
-            {
-                hasCrashedCurrentRun = true;
-                body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
-                game.NotifyBirdCrashed();
-            }
+            hasCrashedCurrentRun = true;
+            body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
+            game.NotifyBirdCrashed();
         }
 
         public void MoveTo(Vector2 position)

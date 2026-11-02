@@ -4,15 +4,16 @@ using UnityEngine;
 namespace FlappyCopy.UI
 {
     /// <summary>
-    /// Portrait UI helper: places a UGUI object inside a "device" rect that is always 9:16 and centered
-    /// in the canvas, so the HUD looks identical on 9:16, 9:19.5 phones and wide desktop windows.
-    /// Coordinates are in 1080 x 1920 reference pixels: x/y from the device's center, y up.
+    /// Portrait UI helper: places a UGUI object inside a "device" rect that is always 9:16 and centered in
+    /// the canvas, so the HUD looks identical on 9:16, 9:19.5 phones and wide desktop windows.
+    /// The device is 1080 x 1920 reference units on every window (<see cref="PortraitHudScaler"/> keeps the
+    /// canvas in the camera's units), and children are positioned from its center in the same units.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(RectTransform))]
     public sealed class DeviceRect : MonoBehaviour
     {
-        [SerializeField, Tooltip("Square size in reference pixels; -1 fills the whole 9:16 device.")]
+        [SerializeField, Tooltip("Square size in reference units; -1 fills the whole 9:16 device.")]
         private float size = -1f;
 
         [SerializeField] private Vector2 position;
@@ -36,29 +37,22 @@ namespace FlappyCopy.UI
             Apply();
         }
 
+        /// <summary>Centers the box on the 9:16 device. Every child of the device inherits this rect.</summary>
         public void Apply()
         {
             var rect = transform as RectTransform;
-            if (rect == null || !(rect.parent is RectTransform parent))
+            if (rect == null || !(rect.parent is RectTransform))
             {
                 return;
             }
 
-            float canvasWidth = parent.rect.width;
-            float canvasHeight = parent.rect.height;
-            if (canvasWidth <= 0f || canvasHeight <= 0f)
-            {
-                return;
-            }
-
-            float scale = Mathf.Min(canvasWidth / DesignSpace.ReferenceWinWidth, canvasHeight / DesignSpace.ReferenceWinHeight);
-            float guardedScale = scale > 0f && !float.IsNaN(scale) ? scale : 0.001f;
-            Vector2 deviceSize = new Vector2(DesignSpace.ReferenceWinWidth, DesignSpace.ReferenceWinHeight) * guardedScale;
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = position * guardedScale;
-            rect.sizeDelta = size > 0f ? new Vector2(size, size) * guardedScale : deviceSize;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size > 0f
+                ? new Vector2(size, size)
+                : new Vector2(DesignSpace.ReferenceWinWidth, DesignSpace.ReferenceWinHeight);
         }
     }
 }

@@ -30,6 +30,13 @@ namespace FlappyCopy.EditorTools
 
             // Tuned so the bird falls ~1 unit in 0.3 s and a flap lifts ~1.8 units.
             player.Configure(2.4f, 6.2f, 14f);
+
+            // The gap may travel over the whole play area: its centre never leaves the range that keeps the
+            // caps of both pipes inside the frame, and the first gap sits at the height the bird starts at.
+            float gapReach = DesignSpace.PlayHalfHeight - (pipes.BaseGap * 0.5f);
+            pipes.ConfigureGapCenterRange(new Vector2(-gapReach, gapReach));
+            player.ConfigureStart(new Vector2(player.StartPosition.x, pipes.GapCenterRange.x));
+
             EditorUtility.SetDirty(player);
             EditorUtility.SetDirty(pipes);
             EditorUtility.SetDirty(world);
@@ -64,11 +71,11 @@ namespace FlappyCopy.EditorTools
             Color cap = settings.CapColor;
             float capWidth = settings.PipeWidth + (settings.CapOverhang * 2f);
             Transform top = Part("TopPipe", root.transform, SortingLayers.Order(SortingLayers.Pipes), -settings.PipeWidth * 0.5f,
-                0f, settings.PipeWidth, DesignSpace.PlayHalfHeight, pipe);
+                0f, settings.PipeWidth, DesignSpace.HalfHeight, pipe);
             Transform bottom = Part("BottomPipe", root.transform, SortingLayers.Order(SortingLayers.Pipes), -settings.PipeWidth * 0.5f,
                 0f, settings.PipeWidth, 1f, pipe);
             Transform topCap = Part("TopCap", root.transform, SortingLayers.Order(SortingLayers.Pipes), -capWidth * 0.5f,
-                DesignSpace.PlayHalfHeight - settings.CapHeight, capWidth, settings.CapHeight, cap);
+                DesignSpace.HalfHeight - settings.CapHeight, capWidth, settings.CapHeight, cap);
             Transform bottomCap = Part("BottomCap", root.transform, SortingLayers.Order(SortingLayers.Pipes), -capWidth * 0.5f,
                 0f, capWidth, settings.CapHeight, cap);
 
@@ -165,6 +172,12 @@ namespace FlappyCopy.EditorTools
             part.transform.localScale = new Vector3(width, height, 1f);
             var renderer = part.AddComponent<SpriteRenderer>();
             renderer.sprite = SpriteTextures.Load(SpriteTextures.WhitePath);
+            renderer.sharedMaterial = SpriteTextures.Material();
+            if (renderer.sharedMaterial == null)
+            {
+                Debug.LogError("[FlappyCopy] The sprite material asset is missing (rebuild the textures).");
+            }
+
             renderer.color = color;
             renderer.sortingOrder = order;
             return part.transform;

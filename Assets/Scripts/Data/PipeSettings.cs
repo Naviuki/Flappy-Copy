@@ -17,7 +17,7 @@ namespace FlappyCopy.Data
         [Header("Gaps")]
         [SerializeField, Min(0.1f)] private float baseGap = 4.6f;
         [SerializeField, Min(0.1f)] private float minimumGap = DefaultMinimumGap;
-        [SerializeField] private Vector2 gapCenterRange = new(-2.4f, 2.7f);
+        [SerializeField] private Vector2 gapCenterRange = new(-3.2f, 3.6f);
 
         [Header("Placement")]
         [SerializeField, Range(0f, 1f)] private float maximumHeightStep = 0.45f;
@@ -52,6 +52,12 @@ namespace FlappyCopy.Data
         {
             return GapPlacement.NextCentre(previousCenter, gap, GapCenterRange.x, GapCenterRange.y,
                 DesignSpace.PlayHalfHeight, maximumHeightStep, random);
+        }
+
+        /// <summary>Sets the vertical range the gap centre may use (the editor keeps it inside the play area).</summary>
+        public void ConfigureGapCenterRange(Vector2 range)
+        {
+            gapCenterRange = range;
         }
     }
 }

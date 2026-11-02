@@ -18,7 +18,7 @@ MonoBehaviour:
   maximumUpAngle: 32
   maximumDownAngle: -75
   tiltResponsiveness: 9
-  startPosition: {x: -1.6, y: 1.2}
+  startPosition: {x: -1.6, y: -4.7}
   idleBobAmplitude: 0.18
   idleBobSpeed: 1.6
   velocityIncreasePerPoint: 0.05

@@ -56,5 +56,11 @@ namespace FlappyCopy.Data
             flapVelocity = flap;
             maximumFallSpeed = fallSpeed;
         }
+
+        /// <summary>Moves the bird's starting height (the x stays where the scene places the bird).</summary>
+        public void ConfigureStart(Vector2 start)
+        {
+            startPosition = start;
+        }
     }
 }
