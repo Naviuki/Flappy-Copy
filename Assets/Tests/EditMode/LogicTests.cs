@@ -558,7 +558,42 @@ namespace FlappyCopy.Tests
             Check.Near(0f, World.ScrollMath.Wrap(10f, 10f), 0.0001f, "exact span");
             Check.Near(2.5f, World.ScrollMath.Wrap(12.5f, 10f), 0.0001f, "remainder");
             Check.Near(7.5f, World.ScrollMath.Wrap(-2.5f, 10f), 0.0001f, "negative");
-            Check.Near(3f, World.ScrollMath.StripX(1, 3f, 0f), 0.0001f, "strip index");
+
+            // Two strips of half the frame width tile the design width exactly, whatever the offset. They start
+            // at x = 0 and +width/2 and only ever slide left, so the frame stays covered from the left edge on.
+            float frame = DesignSpace.PortraitWidth;
+            float strip = World.ScrollMath.StripWidthFor(frame);
+            for (float offset = 0f; offset < frame; offset += 0.7f)
+            {
+                float first = World.ScrollMath.StripX(0, strip, offset);
+                Check.Near(0f, first + World.ScrollMath.Wrap(offset, strip), 0.0001f, "strip 0 starts at the edge");
+                Check.Near(World.ScrollMath.StripX(1, strip, offset), first + strip, 0.0001f, "strips sit side by side");
+                Check.True(first <= 0.0001f && first > -strip, "the first strip never leaves a gap on the left");
+            }
+        }
+
+        [Test]
+        public static void GapCentreStaysInsideThePlayArea()
+        {
+            float lowest = -DesignSpace.PlayHalfHeight + (4.6f * 0.5f);
+            float highest = DesignSpace.PlayHalfHeight - (4.6f * 0.5f);
+
+            var random = new System.Random(7);
+            float previous = lowest;
+            for (int i = 0; i < 200; i++)
+            {
+                float centre = GapPlacement.NextCentre(previous, 4.6f, lowest, highest,
+                    DesignSpace.PlayHalfHeight, 0.45f, random);
+                Check.True(centre >= lowest - 0.0001f && centre <= highest + 0.0001f, "gap centre in range");
+                previous = centre;
+            }
+
+            // A gap centre that is asked for above the range is pulled down towards it (but may be limited by
+            // the step), and a centre that would leave the frame is always clamped into it.
+            float overshoot = highest + 10f;
+            float pulled = GapPlacement.NextCentre(overshoot, 4.6f, lowest, highest,
+                DesignSpace.PlayHalfHeight, 0.45f, random);
+            Check.True(pulled < overshoot, "an out-of-range request moves towards the range");
         }
 
         [Test]

@@ -28,6 +28,17 @@ namespace FlappyCopy.Tests
         }
 
         [Test]
+        public static void SoundEffectOrderMatchesTheEnum()
+        {
+            // AudioService picks clips by SfxId order: Flap, Point, Hit, Ground. Two files swapped would play the
+            // wrong sound, so the enum order is pinned here.
+            Check.Equal(0, (int)SfxId.Flap, "flap is the first effect");
+            Check.Equal(1, (int)SfxId.Point, "point is the second effect");
+            Check.Equal(2, (int)SfxId.Hit, "hit is the third effect");
+            Check.Equal(3, (int)SfxId.Ground, "ground is the last effect");
+        }
+
+        [Test]
         public static void SilenceServiceCountsPlays()
         {
             var audio = new NullAudioService();

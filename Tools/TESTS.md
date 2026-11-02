@@ -39,10 +39,10 @@ machine where a scripted session has to compile scripts on startup: the run is s
 
 | Fixture | Covers |
 |---|---|
-| `LogicTests` | state machine transitions and callbacks, input policy, scoring and the record, object pool, pipe run (spacing, scrolling, recycling, gap roll), pass-through points, difficulty ramp, gap placement, bird kinematics, camera framing, scroll wrap, HUD rules |
+| `LogicTests` | state machine transitions and callbacks, input policy, scoring and the record, object pool, pipe run (spacing, scrolling, recycling, gap roll), pass-through points, difficulty ramp, gap placement and its range, bird kinematics, camera framing, ground strip tiling, HUD rules |
 | `ObjectPoolTests` | pool prewarm, take/release accounting, callbacks, release-all, double and foreign releases, null factory |
-| `GameSceneTests` | the scene and prefabs exist, prefabs carry their scripts, audio clips exist, legacy input, pool reuse, settings asset paths |
-| `AudioTests` | generated clips have data and are audible without clipping, the envelope is click-free, the mute preference round-trips, the silent service counts plays |
+| `GameSceneTests` | the scene and prefabs exist, prefabs carry their scripts, the white sprite is one unit with a bottom-left pivot, the ground strips cover the frame, audio clips exist, legacy input, pool reuse, settings asset paths |
+| `AudioTests` | generated clips have data and are audible without clipping, the envelope is click-free, the mute preference round-trips, the silent service counts plays, the sound effect order matches the enum |
 | `TestBootstrapTests` | at least one `[TestFixture]` exists, so the assembly is always loaded by the Test Runner |
 
 `Check.True/False/Equal/Near/Sequence` are the small assertion helpers the tests share.
@@ -62,10 +62,15 @@ type Builds\SelfTest\selftest_output.txt
 The player checks every scene reference, the HUD wiring, both prefabs (layers, trigger colliders), layers and
 sorting layers, then starts a run without flapping and expects the bird to fall into the ground and the run to
 end in `GameOver` (this is the real collision + relay + state machine path). It writes
-`Builds/SelfTest/selftest_output.txt` and exits with 0 only if every line is `PASS`.
+`Builds/SelfTest/selftest_output.txt` and exits with 0 only if every line is `PASS`. Run it without
+`-batchmode` (windowed) to also get `Builds/SelfTest/gameplay.png` and `result.png`.
+
+The EditMode suite runs the same checks headlessly, plus scene and prefab checks (sprite size and pivot, the
+ground strips covering the frame, the audio assets and their order).
 
 ## If a check fails
 
 `Flappy Copy ▸ Validate Project` (`FlappyCopy.EditorTools.ProjectValidator.RunAndExit`) lists the exact missing
-reference or component. After changing component scripts, run `Flappy Copy ▸ Repair Assets`: it re-imports the
-component scripts and regenerates data, prefabs and the scene.
+reference or component; it also reports a sprite without the game's material. After changing component scripts,
+run `Flappy Copy ▸ Repair Assets`: it re-imports the component scripts and regenerates data, prefabs and the
+scene.

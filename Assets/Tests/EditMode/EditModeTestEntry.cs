@@ -32,6 +32,7 @@ namespace FlappyCopy.Tests
             string filter = ReadArgument("-testFilter") ?? string.Empty;
             List<string> lines = new List<string>();
             List<string> failures = new List<string>();
+            Debug.Log("[FlappyCopy.Tests] running " + typeof(GameSceneTests).Assembly.Location);
             foreach (string name in Discover())
             {
                 if (filter.Length > 0 && !name.Contains(filter))

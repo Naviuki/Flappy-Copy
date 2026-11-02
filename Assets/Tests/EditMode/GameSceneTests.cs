@@ -9,6 +9,7 @@ using FlappyCopy.Pooling;
 using FlappyCopy.Score;
 using FlappyCopy.Testing;
 using FlappyCopy.UI;
+using FlappyCopy.World;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -73,6 +74,42 @@ namespace FlappyCopy.Tests
             string pipe = System.IO.File.ReadAllText(PipePrefab);
             Check.True(pipe.Contains(nameof(PipePair)), "pipe prefab references the pipe pair");
             Check.True(pipe.Contains(nameof(PipePassGate)), "pipe prefab references the score gate");
+        }
+
+        [Test]
+        public static void SpritesAreOneUnitWideWithABottomLeftPivot()
+        {
+            Sprite sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/White.png");
+            Check.True(sprite != null, "white sprite");
+            Check.Near(1f, sprite.bounds.size.x, 0.001f, "a sprite is exactly one world unit wide (PPU 32, 32 px)");
+            Check.Near(0f, sprite.pivot.x, 0.001f, "bottom-left pivot x");
+            Check.Near(0f, sprite.pivot.y, 0.001f, "bottom-left pivot y");
+
+            // Every sprite in the prefabs and the scene is scaled by its size in world units, which only works
+            // with the convention above: a 1-unit sprite and a bottom-left pivot.
+            GameObject bird = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(BirdPrefab);
+            Transform body = bird.transform.Find("Visual/Body");
+            Check.True(body != null, "bird body");
+            var renderer = body.GetComponent<SpriteRenderer>();
+            Check.True(renderer != null && renderer.sprite == sprite, "the bird is drawn with the white sprite");
+            Check.Near(0.5f, body.localScale.x, 0.001f, "bird body is 0.5 world units wide");
+            Check.Near(1f, renderer.sprite.bounds.size.x, 0.001f, "one sprite unit before scaling");
+        }
+
+        [Test]
+        public static void GroundStripsTileTheFrame()
+        {
+            // The scene stores the ground strips already scaled to the frame: the first strip starts one strip
+            // left of the frame and the second at the left edge, so both edges are covered without a bare patch.
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene(ScenePath);
+            var ground = UnityEngine.Object.FindAnyObjectByType<InfinityGround>();
+            Check.True(ground != null, "the scene has the endless ground");
+            Check.Equal(2, ground.StripCount, "two ground strips");
+            Check.Near(DesignSpace.PortraitWidth, ground.StripWidth, 0.001f, "a strip is a frame wide");
+            Check.True(ground.transform.Find("Strip 0").localPosition.x <= -DesignSpace.HalfWidth,
+                "the first strip starts left of the frame");
+            Check.Near(0f, ground.transform.Find("Strip 1").localPosition.x, 0.001f,
+                "the second strip starts at the left edge");
         }
 
         [Test]
