@@ -76,5 +76,22 @@ namespace FlappyCopy.Cameras
             // Wider than 9:16: fit the height.
             return DesignSpace.PortraitHeight * 0.5f;
         }
+
+        /// <summary>
+        /// Half-width of the play area in world units for a view of <paramref name="orthographicSize"/> and
+        /// <paramref name="aspect"/>: at least the 9:16 design width, wider on a wide window. The pipes, the
+        /// reveal and the ground all use it so the play area never runs past what the player sees.
+        /// </summary>
+        public static float PlayHalfWidth(float orthographicSize, float aspect)
+        {
+            float visible = orthographicSize * Mathf.Max(0.0001f, aspect);
+            return Mathf.Max(DesignSpace.HalfWidth, visible);
+        }
+
+        /// <summary>Play-area half-height: the 9:16 design height, or more when a wide window shows more.</summary>
+        public static float PlayHalfHeight(float orthographicSize)
+        {
+            return Mathf.Max(DesignSpace.HalfHeight, orthographicSize);
+        }
     }
 }

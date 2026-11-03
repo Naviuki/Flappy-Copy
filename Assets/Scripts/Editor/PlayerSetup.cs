@@ -27,8 +27,8 @@ namespace FlappyCopy.EditorTools
 
             PlayerSettings.companyName = "Flappy Copy";
             PlayerSettings.productName = GameConstants.ProductName;
-            PlayerSettings.bundleVersion = "1.0.0";
-            PlayerSettings.Android.bundleVersionCode = 1;
+            PlayerSettings.bundleVersion = "1.0.1";
+            PlayerSettings.Android.bundleVersionCode = 2;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = false;
             PlayerSettings.allowedAutorotateToLandscapeRight = false;

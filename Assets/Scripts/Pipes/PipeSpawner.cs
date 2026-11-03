@@ -18,6 +18,9 @@ namespace FlappyCopy.Pipes
         [SerializeField] private Camera targetCamera;
         [SerializeField] private int prewarmCount = 6;
 
+        /// <summary>How far left of the frame pipes keep being laid out (a little more than one spacing).</summary>
+        private const float LeftReach = 7f;
+
         private ObjectPool<PipePair> pool;
         private PipeRun run;
         private int poolSize;
@@ -29,6 +32,14 @@ namespace FlappyCopy.Pipes
         public int ActivePairs => run?.Count ?? 0;
         public PipeRun Run => run;
         public float ScreenRightEdge => CalculateRightEdge();
+
+        /// <summary>Every pipe pair the bird has fully cleared, as seen by the scoring sensor (debug view).</summary>
+        private event System.Action<PipePair> PairPassed;
+
+        /// <summary>Number of passes the sensor delivered; a tool can show it (the score itself is the real result).</summary>
+        public int PassCount { get; private set; }
+
+        private PipePassSensor sensor;
 
         private void Awake()
         {
@@ -61,6 +72,12 @@ namespace FlappyCopy.Pipes
             {
                 EnsureScreenCoverage();
             }
+
+            // The sensor is created on first use (it needs the bird, a sibling object): scoring always runs.
+            if (Sensor() == null)
+            {
+                Debug.LogWarning("PipeSpawner has no bird to score against; pipe passes will not count.");
+            }
         }
 
         private void Update()
@@ -69,9 +86,22 @@ namespace FlappyCopy.Pipes
             {
                 EnsureScreenCoverage();
             }
+
+            // Scoring is position based: the run is only live while the game is playing.
+            if (game != null && game.IsPlaying)
+            {
+                Sensor()?.Sample();
+            }
         }
 
-        /// <summary>Puts every live pair back on its starting slot and clears the scroll distance.</summary>
+        private void HandlePairPassed(PipePair pair)
+        {
+            PassCount++;
+            game?.AddPoint();
+            PairPassed?.Invoke(pair);
+        }
+
+        /// <summary>Back to the start layout: every pair on its slot, the first one with the bird's start height.</summary>
         public void ResetRun()
         {
             if (run == null)
@@ -80,13 +110,19 @@ namespace FlappyCopy.Pipes
             }
 
             run.Reset();
-            lastCenter = 0f;
+            int score = game != null && game.Score != null ? game.Score.Score : 0;
+            float firstCenter = pipeSettings != null ? pipeSettings.GapCenterRange.x : 0f;
+            lastCenter = firstCenter;
             for (int i = 0; i < run.Count; i++)
             {
                 IPipePair pair = run.GetPair(i);
                 float x = run.XOf(i);
+
+                // The first pair the bird meets is in the way of its start height, so a run always begins with
+                // a gap the bird can reach without moving; the pairs behind it are spread over the play area.
+                float center = i == 0 ? firstCenter : PlaceNextCenter(game != null ? game.GetGap(score) : run.Config.Gap);
                 pair.MoveTo(x);
-                pair.Activate(x, game.GetGap(0), 0f, run.Random);
+                pair.Activate(x, game != null ? game.GetGap(score) : run.Config.Gap, center, run.Random);
             }
         }
 
@@ -98,6 +134,8 @@ namespace FlappyCopy.Pipes
                 return;
             }
 
+            // The run is laid out in a fixed box; scrolling without limits would walk it out of the play
+            // area, so the scroll distance is wrapped and pairs that left the play area are recycled.
             float speed = PipeRunMath.Speed(baseSpeed, game.GetSpeedIncrease(score));
             run.Tick(deltaTime, speed, () => game.GetGap(score), PlaceNextCenter);
         }
@@ -115,13 +153,44 @@ namespace FlappyCopy.Pipes
             return lastCenter;
         }
 
+        /// <summary>
+        /// Scoring sensor of the run, created on first use: it needs the bird, which is a sibling object, so
+        /// the Awake order may not have provided it yet.
+        /// </summary>
+        private PipePassSensor Sensor()
+        {
+            if (sensor != null || game == null || game.Bird == null)
+            {
+                return sensor;
+            }
+
+            sensor = new PipePassSensor(this, game.Bird.transform);
+            sensor.PairPassed += HandlePairPassed;
+            return sensor;
+        }
+
         private PipeRunConfig BuildConfig(int size)
         {
             float width = pipeSettings != null ? pipeSettings.PipeWidth : 1.5f;
             float spacing = worldSettings != null ? worldSettings.PipeSpacing : 5.2f;
             float offset = worldSettings != null ? worldSettings.SpawnOffsetFromRightEdge : 1.4f;
-            return new PipeRunConfig(spacing, width, ScreenRightEdge, offset, size,
+            return new PipeRunConfig(spacing, width, PlayHalfWidth(), offset, size,
                 pipeSettings != null ? pipeSettings.BaseGap : 4f);
+        }
+
+        /// <summary>
+        /// Half-width of the play area: the 9:16 design width, or more when a wide window reveals more world.
+        /// Pipes are laid out and recycled across exactly this width, so a pair never pops inside the view.
+        /// </summary>
+        public float PlayHalfWidth()
+        {
+            Camera cam = targetCamera != null ? targetCamera : Camera.main;
+            if (cam == null)
+            {
+                return DesignSpace.HalfWidth;
+            }
+
+            return Cameras.PortraitFraming.PlayHalfWidth(cam.orthographicSize, cam.aspect);
         }
 
         /// <summary>Grows the pool only (never shrinks), so the widest window shown stays covered.</summary>
@@ -135,7 +204,7 @@ namespace FlappyCopy.Pipes
             lastScreenWidth = Screen.width;
             lastScreenHeight = Screen.height;
             int needed = Mathf.Max(prewarmCount,
-                PipeRunMath.SlotsFor(ScreenRightEdge, worldSettings.PipeSpacing, worldSettings.SpawnOffsetFromRightEdge));
+                PipeRunMath.SlotsFor(PlayHalfWidth(), worldSettings.PipeSpacing, worldSettings.SpawnOffsetFromRightEdge));
             if (needed <= poolSize)
             {
                 return;
@@ -158,13 +227,7 @@ namespace FlappyCopy.Pipes
 
         private float CalculateRightEdge()
         {
-            Camera cam = targetCamera != null ? targetCamera : Camera.main;
-            if (cam == null)
-            {
-                return DesignSpace.HalfWidth;
-            }
-
-            return Mathf.Max(DesignSpace.HalfWidth, cam.orthographicSize * cam.aspect);
+            return PlayHalfWidth();
         }
     }
 }

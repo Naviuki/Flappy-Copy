@@ -27,12 +27,18 @@ namespace FlappyCopy.Core
         IScoreService Score { get; }
     }
 
+    /// <summary>Stops the frame loop for a moment (the window loses focus, a menu opens, a tool inspects the scene).</summary>
+    public interface IPausable
+    {
+        void SetPaused(bool paused);
+    }
+
     /// <summary>
     /// Composition root: builds the services, the state machine and the input, then owns the per-frame
     /// loop. Bird, pipes and UI only react to events; there is no view code in here.
     /// </summary>
     [DefaultExecutionOrder(-100)]
-    public sealed class GameController : MonoBehaviour, IGameContext, IDifficultyProvider, IGameEvents
+    public sealed class GameController : MonoBehaviour, IGameContext, IDifficultyProvider, IGameEvents, IPausable
     {
         [Header("Data")]
         [SerializeField] private PlayerSettings playerSettings;
@@ -126,9 +132,16 @@ namespace FlappyCopy.Core
             StepFrame();
         }
 
+        private bool isPaused;
+
+        public void SetPaused(bool paused)
+        {
+            isPaused = paused;
+        }
+
         private void StepFrame()
         {
-            if (!isReady)
+            if (!isReady || isPaused)
             {
                 return;
             }
@@ -174,6 +187,15 @@ namespace FlappyCopy.Core
         public void RequestPress()
         {
             inputSource?.RequestFlap();
+        }
+
+        /// <summary>One cleared pipe pair: adds the point (the score event plays the sound and updates the HUD).</summary>
+        public void AddPoint()
+        {
+            if (isReady && stateMachine.Current.Id == GameState.Playing)
+            {
+                scoreService.AddPoint();
+            }
         }
 
         /// <summary>Raised by the bird's trigger hitboxes (pipes, ground, ceiling).</summary>

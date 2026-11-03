@@ -9,8 +9,8 @@ namespace FlappyCopy.Testing
     /// <summary>
     /// Self-test hook of the dedicated test build (FLAPPYCOPY_SELF_TEST): starts a runner that checks the
     /// loaded game scene, plays one short run without flapping (the bird must fall into the ground and the run
-    /// must end), writes the report next to the player and quits with 0 when everything passed.
-    /// A normal build compiles none of this code.
+    /// must end), passes one pipe pair through the scene's own scoring sensor, writes the report next to the
+    /// player and quits with 0 when everything passed. A normal build compiles none of this code.
     /// </summary>
     public static class SelfTestBootstrap
     {
@@ -34,17 +34,39 @@ namespace FlappyCopy.Testing
     public sealed class SelfTestRunner : MonoBehaviour
     {
         private const float RunLimitSeconds = 10f;
+
+        // Captures for the docs: an early one of the run in progress, and a later one that replaces it only
+        // when a pipe pair is actually inside the frame.
         private const float ScreenshotAtSeconds = 0.25f;
+        private const float SecondScreenshotAtSeconds = 0.9f;
+
+        // The score check moves one pair over the bird; it starts as soon as the run is live.
+        private const float ScoreCheckAtSeconds = 0.35f;
 
         private readonly List<string> lines = new List<string>();
+        private readonly List<Renderer> hiddenRenderers = new List<Renderer>();
         private int frame;
         private int failures;
         private bool checksDone;
         private bool pipesSeen;
         private bool shotTaken;
-        private string PanoramaPath => SelfTestReport.PathOf("result.png");
+        private bool secondShotTaken;
+        private bool scoreChecked;
+        private bool scorePassed;
         private bool finished;
         private float runStartedAt = -1f;
+
+        // Score check state.
+        private PipePair scoringPair;
+        private GameController scoringGame;
+        private Vector3 scoringOriginal;
+        private float scoringStart;
+        private float scoringTarget;
+        private bool scoringStarted;
+        private int scoringFrames;
+        private int scoreBeforeCheck;
+
+        private static string PanoramaPath => SelfTestReport.PathOf("result.png");
 
         private void Awake()
         {
@@ -89,11 +111,29 @@ namespace FlappyCopy.Testing
 
             float elapsed = Time.realtimeSinceStartup - runStartedAt;
 
-            // One shot of the run in progress, for the docs: the HUD, the bird and the first pipe pair.
+            if (!scoreChecked && elapsed >= ScoreCheckAtSeconds)
+            {
+                scorePassed = StartScoringCheck(controller);
+            }
+
+            if (scoringStarted)
+            {
+                StepScoringCheck();
+            }
+
             if (!shotTaken && elapsed >= ScreenshotAtSeconds)
             {
                 shotTaken = true;
                 ScreenCapture.CaptureScreenshot(SelfTestReport.PathOf("gameplay.png"));
+            }
+
+            if (shotTaken && !secondShotTaken && elapsed >= SecondScreenshotAtSeconds)
+            {
+                secondShotTaken = true;
+                if (FindObjectsByType<PipePair>().Length > 0)
+                {
+                    ScreenCapture.CaptureScreenshot(SelfTestReport.PathOf("gameplay.png"));
+                }
             }
 
             if (controller.State == GameState.GameOver)
@@ -113,6 +153,93 @@ namespace FlappyCopy.Testing
             return FindAnyObjectByType<GameController>();
         }
 
+        /// <summary>
+        /// Starts the score check: takes a live pair, gives it a gap around the bird and puts it just right of
+        /// the bird. The following frames walk it left, through the scene's own scoring sensor.
+        /// </summary>
+        private bool StartScoringCheck(GameController controller)
+        {
+            PipePair[] pairs = FindObjectsByType<PipePair>();
+            if (pairs.Length == 0)
+            {
+                return false;
+            }
+
+            scoringGame = controller;
+            scoreBeforeCheck = controller.Score.Score;
+            scoringPair = pairs[0];
+            scoringOriginal = scoringPair.transform.position;
+            float birdX = controller.Bird.transform.position.x;
+            float birdY = controller.Bird.transform.position.y;
+
+            // The bird first sits inside the gap, then the pair slides left until the bird is behind it.
+            scoringStart = birdX + 0.6f;
+            scoringTarget = birdX - 1.4f;
+            scoringPair.Activate(scoringStart, 6f, birdY, null);
+            scoringStarted = true;
+            scoringFrames = 0;
+            SetShutter(true);
+            return true;
+        }
+
+        /// <summary>Moves the scoring pair across the bird one step per frame, then restores it.</summary>
+        private void StepScoringCheck()
+        {
+            if (!scoringStarted || scoringPair == null)
+            {
+                return;
+            }
+
+            const int settleFrames = 3;
+            const int steps = 12;
+            if (scoringFrames < settleFrames)
+            {
+                scoringPair.MoveTo(scoringStart);
+            }
+            else if (scoringFrames < settleFrames + steps)
+            {
+                float t = (scoringFrames - settleFrames + 1) / (float)steps;
+                scoringPair.MoveTo(Mathf.Lerp(scoringStart, scoringTarget, t));
+            }
+            else
+            {
+                scoringPair.transform.position = scoringOriginal;
+                scorePassed = scoringGame.Score.Score >= scoreBeforeCheck + 1;
+                scoringStarted = false;
+                SetShutter(false);
+            }
+
+            scoringFrames++;
+        }
+
+        /// <summary>Hides every renderer for the score check, then gives back exactly the ones it hid.</summary>
+        private void SetShutter(bool closed)
+        {
+            if (closed)
+            {
+                foreach (Renderer renderer in FindObjectsByType<Renderer>())
+                {
+                    if (renderer.enabled)
+                    {
+                        hiddenRenderers.Add(renderer);
+                        renderer.enabled = false;
+                    }
+                }
+
+                return;
+            }
+
+            foreach (Renderer renderer in hiddenRenderers)
+            {
+                if (renderer != null)
+                {
+                    renderer.enabled = true;
+                }
+            }
+
+            hiddenRenderers.Clear();
+        }
+
         private void RunChecks()
         {
             failures += Run("GameControllerHasEveryReference", SelfTestChecks.GameControllerHasEveryReference);
@@ -126,10 +253,13 @@ namespace FlappyCopy.Testing
         {
             failures += crashed ? Pass("RunStartsAndFallsIntoTheGround") : Fail("RunStartsAndFallsIntoTheGround", detail);
             failures += pipesSeen ? Pass("PipesAreSpawned") : Fail("PipesAreSpawned", "no pipe pair appeared");
+            failures += scorePassed
+                ? Pass("ClearingAPipeAddsAPoint")
+                : Fail("ClearingAPipeAddsAPoint", "passing a pair did not add a point");
             Log("done failures=" + failures);
             finished = true;
 
-            // The result panel is up now: one last capture that shows the whole menu/result UI as well.
+            // The result panel is up now: one more capture that shows the whole result UI as well.
             if (crashed && !System.IO.File.Exists(PanoramaPath))
             {
                 ScreenCapture.CaptureScreenshot(PanoramaPath);

@@ -3,12 +3,15 @@ using UnityEngine;
 namespace FlappyCopy.Pipes
 {
     /// <summary>
-    /// Convenience for tests/tools: report whether a pair reaches off the left edge.
-    /// Production code uses the same condition inside <see cref="PipeRun"/>.
+    /// Convenience for tests/tools: the slot maths the spawner and the pipe run share.
+    /// Production code uses the same formulas inside <see cref="PipeRun"/>.
     /// </summary>
     public static class PipeRunMath
     {
-        /// <summary>Slots needed to keep a screen (half width <paramref name="screenRightEdge"/>) covered.</summary>
+        /// <summary>
+        /// Slots needed so the lane is covered from just right of the play area (half width
+        /// <paramref name="screenRightEdge"/>) to one spacing past its left edge.
+        /// </summary>
         public static int SlotsFor(float screenRightEdge, float spacing, float spawnOffset)
         {
             if (spacing <= 0f || screenRightEdge <= 0f)
@@ -16,8 +19,10 @@ namespace FlappyCopy.Pipes
                 return 0;
             }
 
-            float coverage = (screenRightEdge + spawnOffset) * 2f;
-            return Mathf.Max(1, Mathf.CeilToInt(coverage / spacing) + 1);
+            // One lead slot right of the play area, then one slot per spacing across it, plus one that is
+            // already off the left edge (it is the next pair to be recycled).
+            float lane = (screenRightEdge * 2f) + spawnOffset + spacing;
+            return Mathf.Max(1, Mathf.CeilToInt(lane / spacing));
         }
 
         /// <summary>Base speed plus the score ramp, clamped to a positive floor.</summary>

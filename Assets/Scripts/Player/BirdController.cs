@@ -61,14 +61,24 @@ namespace FlappyCopy.Player
 
         public void ResetToStart()
         {
-            startY = settings.StartPosition.y;
+            startY = StartY();
+
+            // The start height follows the gap range, so a taller phone (which reveals more world) still starts
+            // the bird inside a gap the pipes can offer.
+            Vector2 start = new Vector2(settings.StartPosition.x, startY);
             hasCrashedCurrentRun = false;
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
             body.rotation = 0f;
-            MoveTo(settings.StartPosition);
+            MoveTo(start);
             bobTime = 0f;
             SetTilt(0f);
+        }
+
+        /// <summary>World y the bird starts at (and bobs around).</summary>
+        private float StartY()
+        {
+            return game != null && game.Pipes != null ? game.Pipes.GapCenterRange.x : settings.StartPosition.y;
         }
 
         public void TickIdle(float deltaTime)
