@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.1
+
+**Fixed in the game**
+
+- **Clearing a pipe pair did not add a point.** The pass sensor existed but was never created and nothing
+  called the score; the spawner now creates it, samples it during a run and counts the point, and every pair
+  reports exactly once.
+- **The pipe run walked off the play area** after about a minute (the scroll distance grew without limits): it
+  now wraps after one spacing and pairs that leave the play area are recycled to the right end of the lane. A
+  wide window reveals more world, and the lane and the amount of pairs follow it.
+- A run starts with the first pair in line with the bird's height (the start height is derived from the gap
+  range, so tall phones do too), and every pair of a run gets a fresh gap instead of the last one it had.
+- The game loop can be paused (`GameController.SetPaused`), so a tool or a window losing focus can stop the
+  world without changing state.
+
+**Project**
+
+- 67 EditMode checks (lane wrapping, pair spacing, scoring while playing, the play area, the capped fall).
+- The self-test player also passes a live pair through the scene's scoring sensor and expects the point
+  (`ClearingAPipeAddsAPoint`); it is stable across repeated portrait runs and in a wide window.
+- README/CHANGELOG/TESTS updated, `Docs/gameplay.png` recaptured.
+
 ## 1.0.0 — release
 
 First complete version of Flappy Copy (Unity 6000.5.1f1, URP 2D, Windows x64).

@@ -23,11 +23,11 @@ assets, validates them, runs the checks and cuts a release build.
   wrong reason. The **SOUND ON/OFF** button (top right) mutes everything and remembers the choice in
   `PlayerPrefs` (`FlappyCopy.SoundEnabled`).
 - **Ground and sky**: endless ground made from wrapping strips, clouds and a town silhouette in parallax.
-- **States**: Menu → Playing → Game Over, with score, best score and a restart button; a tap also restarts.
-- **Portrait 9:16** camera and HUD on any window size; desktop builds start at 720×1280 in a window,
+- **States**: Menu в†’ Playing в†’ Game Over, with score, best score and a restart button; a tap also restarts.
+- **Portrait 9:16** camera and HUD on any window size; desktop builds start at 720Г—1280 in a window,
   Android builds are locked to portrait.
 
-Controls: **Space**, **left mouse button**, **touch** or the full-screen button — start, flap and restart.
+Controls: **Space**, **left mouse button**, **touch** or the full-screen button вЂ” start, flap and restart.
 **R** restarts after a crash. **SOUND** (top right) mutes/unmutes.
 
 ## How to run
@@ -41,7 +41,7 @@ The scene, prefabs and data assets are in the repository. If you change componen
 
 ## Build and release
 
-- **In the editor**: `File ▸ Build Profiles` → Windows (or Android) → Build. Desktop players open windowed.
+- **In the editor**: `File в–ё Build Profiles` в†’ Windows (or Android) в†’ Build. Desktop players open windowed.
 - **Windows player from the command line**:
 
   ```bat
@@ -49,7 +49,7 @@ The scene, prefabs and data assets are in the repository. If you change componen
   ```
 
   Writes `Builds\Windows\FlappyCopy.exe`.
-- **Windows release** (validate → build → stage → zip):
+- **Windows release** (validate в†’ build в†’ stage в†’ zip):
 
   ```bat
   Tools\build_release.bat [path\to\Unity.exe]
@@ -62,31 +62,31 @@ The scene, prefabs and data assets are in the repository. If you change componen
 - **Android**: switch platform to Android and build (portrait, min API 26, `com.flappycopy.game`).
 
 Player settings (applied by `FlappyCopy.EditorTools.PlayerSetup.Apply`, also from
-**Flappy Copy ▸ Apply Player Settings**): product name `Flappy Copy`, version `1.0.0`, 720×1280 windowed,
+**Flappy Copy в–ё Apply Player Settings**): product name `Flappy Copy`, version `1.0.0`, 720Г—1280 windowed,
 portrait only on mobile, legacy Input Manager, URP 2D pipeline.
 
 ## Architecture
 
 ```
 Assets/Scripts (FlappyCopy.Runtime)
-├── Core/       GameController (composition root + game loop), GameStateMachine + MenuState/PlayingState/
-│               GameOverState (State pattern), GameConstants + DesignSpace, DifficultyRules + GapPlacement
-│               (engine-free rules), CollisionRelay, LayersBootstrapper (layers/tags/sorting layers),
-│               PlayerInputReader + PressPolicy, ReleaseMarker
-├── Audio/      SfxId, IAudioService + NullAudioService, AudioService (playback + mute), SfxLibrary
-│               (clip synthesis), SoundPreference (memory / PlayerPrefs)
-├── Data/       PlayerSettings, PipeSettings, WorldSettings   (ScriptableObjects: all tuning)
-├── Input/      IInputSource, UnityInputSource (Space/mouse/touch), ScriptedInputSource
-├── Player/     BirdController (Rigidbody2D motion, tilt, crash), BirdKinematics (pure model)
-├── Pipes/      IPipePair + PipeRun (slots, recycling), PipePair (sprites + hitboxes),
-│               PipePassGate + PipePassRule (one point per pair), PipeSpawner (pool owner), PipeRunMath
-├── Pooling/    ObjectPool<T>, IPoolFactory, PrefabPoolFactory, IPoolable
-├── Score/      IScoreService, ScoreService (events), IScoreStorage, PlayerPrefsScoreStorage
-├── Testing/    SelfTestChecks + SelfTestBootstrap (checks of the self-test player build)
-├── UI/         HudController (event subscriber), HudView (texts/panels/buttons), HudFlow, PlayAreaButton,
-│               PortraitHudScaler
-├── World/      InfinityGround (wrapping strips), ParallaxScroller, ScrollMath
-└── Cameras/    PortraitFraming (9:16 camera for any aspect)
+в”њв”Ђв”Ђ Core/       GameController (composition root + game loop), GameStateMachine + MenuState/PlayingState/
+в”‚               GameOverState (State pattern), GameConstants + DesignSpace, DifficultyRules + GapPlacement
+в”‚               (engine-free rules), CollisionRelay, LayersBootstrapper (layers/tags/sorting layers),
+в”‚               PlayerInputReader + PressPolicy, ReleaseMarker
+в”њв”Ђв”Ђ Audio/      SfxId, IAudioService + NullAudioService, AudioService (playback + mute), SfxLibrary
+в”‚               (clip synthesis), SoundPreference (memory / PlayerPrefs)
+в”њв”Ђв”Ђ Data/       PlayerSettings, PipeSettings, WorldSettings   (ScriptableObjects: all tuning)
+в”њв”Ђв”Ђ Input/      IInputSource, UnityInputSource (Space/mouse/touch), ScriptedInputSource
+в”њв”Ђв”Ђ Player/     BirdController (Rigidbody2D motion, tilt, crash), BirdKinematics (pure model)
+в”њв”Ђв”Ђ Pipes/      IPipePair + PipeRun (slots, recycling), PipePair (sprites + hitboxes),
+в”‚               PipePassGate + PipePassRule (one point per pair), PipeSpawner (pool owner), PipeRunMath
+в”њв”Ђв”Ђ Pooling/    ObjectPool<T>, IPoolFactory, PrefabPoolFactory, IPoolable
+в”њв”Ђв”Ђ Score/      IScoreService, ScoreService (events), IScoreStorage, PlayerPrefsScoreStorage
+в”њв”Ђв”Ђ Testing/    SelfTestChecks + SelfTestBootstrap (checks of the self-test player build)
+в”њв”Ђв”Ђ UI/         HudController (event subscriber), HudView (texts/panels/buttons), HudFlow, PlayAreaButton,
+в”‚               PortraitHudScaler
+в”њв”Ђв”Ђ World/      InfinityGround (wrapping strips), ParallaxScroller, ScrollMath
+в””в”Ђв”Ђ Cameras/    PortraitFraming (9:16 camera for any aspect)
 ```
 
 Requirements and where they are met:
@@ -104,7 +104,7 @@ Requirements and where they are met:
 
 The loop is `GameController.StepFrame()`: read the input policy for the current state, then idle the bird
 (menu), run pipes/ground/bird (playing) or let it fall (game over). Death comes as an event from the bird's
-trigger hitbox: `CollisionRelay` → `BirdController.OnCollisionEntered` → `GameController.NotifyBirdCrashed` →
+trigger hitbox: `CollisionRelay` в†’ `BirdController.OnCollisionEntered` в†’ `GameController.NotifyBirdCrashed` в†’
 `GameStateMachine` (and the hit/ground sounds).
 
 ### Collision setup (matters for gameplay)
@@ -120,7 +120,7 @@ trigger hitbox: `CollisionRelay` → `BirdController.OnCollisionEntered` → `Ga
 
 ### Rendering
 
-All visuals come from one generated 32×32 white texture (`Assets/Textures/White.png`), imported at 32 pixels
+All visuals come from one generated 32Г—32 white texture (`Assets/Textures/White.png`), imported at 32 pixels
 per unit with a **bottom-left pivot**, so a sprite is exactly 1 world unit and each object scales it to its size
 in world units (`GameScene.Block`). Every sprite uses one generated **unlit** material
 (`Assets/Materials/FlappyCopySprite.mat`, `Universal Render Pipeline/2D/Sprite-Unlit-Default`), so a sprite's
@@ -131,7 +131,7 @@ is two strips as wide as the frame: the first starts one strip left of the frame
 [-strip, +strip] and both edges stay under the ground while it scrolls.
 
 The HUD is a screen-space canvas whose reference size follows the camera (`PortraitHudScaler`): one world unit
-is 360 reference units, so the 9:16 device box is 1080×1920 reference units and the HUD keeps the world's scale
+is 360 reference units, so the 9:16 device box is 1080Г—1920 reference units and the HUD keeps the world's scale
 on phones, on 9:16 and on wide desktop windows. The font is TextMeshPro's default from the TMP essentials
 package.
 
@@ -139,34 +139,34 @@ package.
 
 | Menu | Command line (`-executeMethod`) | Purpose |
 |---|---|---|
-| Flappy Copy ▸ Rebuild Scene, Prefabs and Data | `FlappyCopy.EditorTools.EditorSetup.PrepareAndExit` | data assets, `Bird`/`PipePair` prefabs, `Game.unity`, build list, player settings, then validation |
+| Flappy Copy в–ё Rebuild Scene, Prefabs and Data | `FlappyCopy.EditorTools.EditorSetup.PrepareAndExit` | data assets, `Bird`/`PipePair` prefabs, `Game.unity`, build list, player settings, then validation |
 | Flappy Copy ▸ Repair Assets | `FlappyCopy.EditorTools.SceneRepair.RebuildAndExit` | re-import component scripts, rebuild everything, validate |
-| Flappy Copy ▸ Validate Project | `FlappyCopy.EditorTools.ProjectValidator.RunAndExit` | every scene reference wired, prefab colliders/components, audio service, input handler, build list |
-| Flappy Copy ▸ Apply Player Settings | `FlappyCopy.EditorTools.PlayerSetup.ApplyMenu` | product/version/window/orientation/input handler |
-| Flappy Copy ▸ Audio ▸ Rebuild Sound Effects | `FlappyCopy.EditorTools.AudioAssetBuilder.CreateAll` | writes the four WAV clips into `Assets/Resources` |
-| Flappy Copy ▸ Release ▸ Build Windows Release | `FlappyCopy.EditorTools.ReleaseBuilder.BuildAndExit` | validate, build, stage `Builds/Release`, zip |
-| Flappy Copy ▸ Build ▸ Windows | `FlappyCopy.EditorTools.CiEntry.BuildWindowsCi` | player build to `Builds\Windows` |
-| Flappy Copy ▸ Build ▸ Self Test Player | `FlappyCopy.EditorTools.SelfTestBuild.BuildAndExit` | test player with the runtime scene + run checks |
-| Flappy Copy ▸ Open Game Scene | — | opens `Assets/Scenes/Game.unity` |
+| Flappy Copy в–ё Validate Project | `FlappyCopy.EditorTools.ProjectValidator.RunAndExit` | every scene reference wired, prefab colliders/components, audio service, input handler, build list |
+| Flappy Copy в–ё Apply Player Settings | `FlappyCopy.EditorTools.PlayerSetup.ApplyMenu` | product/version/window/orientation/input handler |
+| Flappy Copy в–ё Audio в–ё Rebuild Sound Effects | `FlappyCopy.EditorTools.AudioAssetBuilder.CreateAll` | writes the four WAV clips into `Assets/Resources` |
+| Flappy Copy в–ё Release в–ё Build Windows Release | `FlappyCopy.EditorTools.ReleaseBuilder.BuildAndExit` | validate, build, stage `Builds/Release`, zip |
+| Flappy Copy в–ё Build в–ё Windows | `FlappyCopy.EditorTools.CiEntry.BuildWindowsCi` | player build to `Builds\Windows` |
+| Flappy Copy в–ё Build в–ё Self Test Player | `FlappyCopy.EditorTools.SelfTestBuild.BuildAndExit` | test player with the runtime scene + run checks |
+| Flappy Copy в–ё Open Game Scene | вЂ” | opens `Assets/Scenes/Game.unity` |
 
 ## Tests
 
-`Assets/Tests/EditMode` (`FlappyCopy.Tests.EditMode`), **60 checks**, all passing:
+`Assets/Tests/EditMode` (`FlappyCopy.Tests.EditMode`), **67 checks**, all passing:
 
 | Fixture | What it checks |
 |---|---|
-| `LogicTests` | state machine transitions, callbacks and input policy; scoring and the record; the object pool; pipe run (spacing, scrolling, recycling, gap roll); pass-through points; difficulty ramp, gap placement (range and step); bird kinematics; camera framing; ground strip tiling; HUD rules |
+| `LogicTests` | state machine transitions, callbacks and input policy; scoring and the record; the object pool; pipe run (the fixed lane, scroll wrapping, recycling, spacing, gap roll); pass-through scoring; difficulty ramp, gap placement (range and step); bird kinematics and the capped fall; camera framing and the play area; ground strip tiling; HUD rules |
 | `ObjectPoolTests` | pool prewarm, take/release accounting, callbacks, release-all, double release, null factory |
 | `GameSceneTests` | scene/prefabs/settings assets exist, prefabs carry their scripts, the white sprite is 1 unit with a bottom-left pivot, the ground strips cover the frame, audio clips exist and are ordered, legacy input, pool reuse |
-| `AudioTests` | generated clips have samples, are audible and not clipped; the envelope is click-free; the mute preference round-trips |
-| `TestBootstrapTests` | the assembly always contains a decorated fixture |
+| `AudioTests` | generated clips have samples, are audible and not clipped; the envelope is click-free; the mute preference round-trips; the sound order the service indexes by is pinned |
+| `TestBootstrapTests` | the assembly always contains a decorated fixture; a run's pairs all pass the scoring rule |
 
 ```bat
 Tools\run_editmode_tests.ps1
 ```
 
 prints the summary, writes `Logs/harness/editmode_results.json` and exits 0 when every check passed (or use
-`Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All`). `Tools/TESTS.md` explains the three entry points.
+`Window в–ё General в–ё Test Runner в–ё EditMode в–ё Run All`). `Tools/TESTS.md` explains the three entry points.
 
 **Self-test player** (runtime checks in a real build, including physics):
 
@@ -177,21 +177,22 @@ type Builds\SelfTest\selftest_output.txt
 ```
 
 It checks the scene wiring and both prefabs, then plays one run without flapping and expects `GameOver` from a
-real ground collision, with pipe pairs spawned. Run it windowed (without `-batchmode`) to also get
-`Builds/SelfTest/gameplay.png` and `Builds/SelfTest/result.png`, the captures used for the screenshots here.
+real ground collision, with pipe pairs spawned. It also walks a live pair over the bird through the scene's own
+scoring sensor and expects the run to count the point (`ClearingAPipeAddsAPoint`). Run it windowed (without
+`-batchmode`) to also get `Builds/SelfTest/gameplay.png` and `Builds/SelfTest/result.png`.
 
-## What was verified (2026-11-02)
+## What was verified (2026-11-03)
 
 - Compiles with **no errors and no warnings** (`FlappyCopy.EditorTools.SelfCheckEntry.RunAndExit`).
-- `Assets/Scenes/Game.unity` rebuilds and validates with **0 issues** (all `GameController`/`HudController`
-  references, `audioService`, prefab colliders and layers, legacy Input Manager, build list).
-- **60/60 EditMode checks pass** headless; the log is `Logs/harness/editmode_results.log`.
-- The **self-test player** reports `failures=0`: all wiring checks pass, and the scripted run starts, the bird
-  falls, the ground contact ends the run (`GameOver`) and pipe pairs were spawned.
-- The self-test player was also run in a wide window (1000×700): the world and the HUD scale correctly there.
+- `Assets/Scenes/Game.unity` rebuilds and validates with **0 issues** (references, prefabs, sprite material,
+  layers, legacy Input Manager, build list, ground layout stability).
+- **67/67 EditMode checks pass** headless; the log is `Logs/harness/editmode_results.log`.
+- The **self-test player** reports `failures=0` in a portrait (540Г—960) and a wide (1000Г—700) window: all
+  wiring checks pass, the scripted run ends in `GameOver` from a real ground collision, pipe pairs are spawned
+  and clearing a pair adds a point.
 - `Tools\build_release.bat` succeeds: `Builds\Release\FlappyCopy-Windows`, `Builds\FlappyCopy-Windows.zip`
-  (≈40 MB), `VERSION.txt` with SHA-256 hashes.
-- The release player starts headless (`-batchmode`, 540×960) for 20 s with no exceptions and no missing-script
+  (в‰€40 MB), `VERSION.txt` with SHA-256 hashes.
+- The release player starts headless (`-batchmode`, 540Г—960) for 20 s with no exceptions and no missing-script
   messages.
 - `Docs/gameplay.png` (self-test player) and `Docs/preview_scene.png` (scene camera) are real captures.
 
@@ -214,6 +215,16 @@ real ground collision, with pipe pairs spawned. Run it windowed (without `-batch
   material, and `Validate Project` fails if any sprite has no material.
 - The scene had no light at all; the UI sprite material is lit, so the HUD was invisible in edit-mode renders.
   The game now uses unlit sprites and the preview capture adds a temporary light if a scene has none.
+- **Clearing a pipe never added a point.** The scoring sensor (`PipePassSensor`) was written but never created,
+  and nothing called `ScoreService.AddPoint`. `PipeSpawner` now creates the sensor, samples it while the game
+  is playing and counts the point (`GameController.AddPoint`); a run also starts with the first pair in line
+  with the bird's height, so the first gap is reachable.
+- **The pipe run walked out of the play area.** The scroll distance grew without limits, so after a minute the
+  pairs had left the lane and stopped coming back. The scroll now wraps after one spacing and every pair that
+  leaves the play area is recycled to the right end of the lane; on a wide window the lane (and the number of
+  pairs) follows the visible width (`PortraitFraming.PlayHalfWidth`).
+- The first pair of a run reused whatever gap the last one had; every pair now gets a fresh gap that starts at
+  the bird's height.
 
 ## Known limitations
 

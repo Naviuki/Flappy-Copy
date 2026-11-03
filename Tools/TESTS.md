@@ -43,7 +43,7 @@ machine where a scripted session has to compile scripts on startup: the run is s
 | `ObjectPoolTests` | pool prewarm, take/release accounting, callbacks, release-all, double and foreign releases, null factory |
 | `GameSceneTests` | the scene and prefabs exist, prefabs carry their scripts, the white sprite is one unit with a bottom-left pivot, the ground strips cover the frame, audio clips exist, legacy input, pool reuse, settings asset paths |
 | `AudioTests` | generated clips have data and are audible without clipping, the envelope is click-free, the mute preference round-trips, the silent service counts plays, the sound effect order matches the enum |
-| `TestBootstrapTests` | at least one `[TestFixture]` exists, so the assembly is always loaded by the Test Runner |
+| `TestBootstrapTests` | at least one `[TestFixture]` exists, so the assembly is always loaded by the Test Runner; a run's pairs all pass the scoring rule |
 
 `Check.True/False/Equal/Near/Sequence` are the small assertion helpers the tests share.
 

@@ -353,6 +353,10 @@ namespace FlappyCopy.Tests
                 LastGap = gap;
                 LastCenter = centerY;
                 ActivationCount++;
+
+                // A re-used pair is a new obstacle: its per-run scoring flags start over (as PipePassGate does).
+                inside = false;
+                awarded = false;
                 return true;
             }
 
@@ -397,10 +401,10 @@ namespace FlappyCopy.Tests
         public static void PipeRunStartsSpacedToTheRight()
         {
             var run = NewRun(out _);
-            const float spawnX = 4.5f + 1.4f;
+            float first = 4.5f + 5.2f;
             for (int slot = 0; slot < run.Count; slot++)
             {
-                Check.Near(spawnX - (slot * 5.2f), run.XOf(slot), 0.0001f, "slot " + slot);
+                Check.Near(first - (slot * 5.2f), run.XOf(slot), 0.0001f, "slot " + slot);
             }
         }
 
@@ -410,20 +414,84 @@ namespace FlappyCopy.Tests
             var run = NewRun(out PairFactory factory);
             run.Tick(0.5f, 4f, () => 4f, offset => 0f);
             Check.Near(2f, run.Scrolled, 0.0001f, "scroll distance");
-            Check.Near(5.9f - 2f, factory.Pairs[0].X, 0.0001f, "pair moved left");
+            Check.Near(9.7f - 2f, factory.Pairs[0].X, 0.0001f, "pair moved left");
             Check.Equal(4, factory.Created, "no new instances while running");
+        }
+
+        [Test]
+        public static void PipeRunWrapsTheScroll()
+        {
+            // A long run of frames must never push the lane out of the play area: on a wide window there are
+            // enough slots to cover the whole lane, so no pair is ever recycled inside the view and every slot
+            // stays inside the lane after the scroll wraps.
+            var factory = new PairFactory();
+            var config = new PipeRunConfig(5.2f, 1.5f, 9f, 1.4f, 6, 4f);
+            var run = new PipeRun(factory, config, seed: 7);
+            float laneStart = config.ScreenRightEdge + config.Spacing;
+            for (int frame = 0; frame < 2000; frame++)
+            {
+                run.Tick(1f / 60f, 6f, () => 4f, offset => 0f);
+            }
+
+            Check.True(run.Scrolled >= 0f && run.Scrolled < config.Spacing, "scroll stays inside one spacing");
+            for (int slot = 0; slot < run.Count; slot++)
+            {
+                float x = run.XOf(slot);
+                Check.True(x <= laneStart + 0.0001f, "slot " + slot + " never starts right of the lane");
+                Check.True(x >= laneStart - (run.Count * config.Spacing), "slot " + slot + " stays inside the lane");
+            }
+
+            foreach (Pair pair in factory.Pairs)
+            {
+                Check.True(pair.X <= laneStart + 0.0001f, "pair " + pair.X + " never sits right of the lane start");
+            }
+        }
+
+        [Test]
+        public static void PipeRunNeverOverlapsPairs()
+        {
+            // Pairs are spaced by construction; while scrolling they must keep that spacing in the same order
+            // (a re-cycled pair goes to the back of the line, never inside a gap).
+            var run = NewRun(out PairFactory factory);
+            for (int frame = 0; frame < 900; frame++)
+            {
+                run.Tick(1f / 60f, 5f, () => 4f, offset => 0f);
+                if (frame % 37 != 0)
+                {
+                    continue;
+                }
+
+                var positions = new List<float>();
+                foreach (Pair pair in factory.Pairs)
+                {
+                    positions.Add(pair.X);
+                }
+
+                positions.Sort();
+                for (int i = 1; i < positions.Count; i++)
+                {
+                    Check.True(positions[i] - positions[i - 1] >= 5.2f - 0.0001f, "pairs keep their spacing");
+                }
+            }
         }
 
         [Test]
         public static void PipeRunRecyclesInsteadOfSpawning()
         {
+            // One 9:16 lane worth of slots: a pair that leaves the lane is recycled back to its start.
             var run = NewRun(out PairFactory factory);
             for (int frame = 0; frame < 200; frame++)
             {
                 run.Tick(1f / 60f, 6f, () => 4f, offset => 0f);
             }
 
-            Check.True(factory.Pairs[0].ActivationCount > 1, "first pair recycled");
+            bool recycled = false;
+            foreach (Pair pair in factory.Pairs)
+            {
+                recycled |= pair.ActivationCount > 1;
+            }
+
+            Check.True(recycled, "a pair leaving the lane was recycled");
             Check.Equal(4, factory.Created, "pool reused");
         }
 
@@ -432,14 +500,20 @@ namespace FlappyCopy.Tests
         {
             var run = NewRun(out PairFactory factory);
             const float center = 2.25f;
-            for (int frame = 0; frame < 300 && factory.Pairs[0].ActivationCount <= 1; frame++)
+            for (int frame = 0; frame < 300 && AllActivatedOnce(factory); frame++)
             {
                 run.Tick(1f / 60f, 6f, () => 4.2f, offset => center);
             }
 
-            Check.True(factory.Pairs[0].ActivationCount >= 2, "pair recycled");
-            Check.Near(4.2f, factory.Pairs[0].LastGap, 0.0001f, "new gap");
-            Check.Near(center, factory.Pairs[0].LastCenter, 0.0001f, "new centre");
+            Pair recycled = factory.Pairs.Find(pair => pair.ActivationCount >= 2);
+            Check.True(recycled != null, "a pair was recycled");
+            Check.Near(4.2f, recycled.LastGap, 0.0001f, "new gap");
+            Check.Near(center, recycled.LastCenter, 0.0001f, "new centre");
+        }
+
+        private static bool AllActivatedOnce(PairFactory factory)
+        {
+            return factory.Pairs.TrueForAll(pair => pair.ActivationCount <= 1);
         }
 
         [Test]
@@ -463,6 +537,21 @@ namespace FlappyCopy.Tests
         {
             int slots = PipeRunMath.SlotsFor(4.5f, 5.2f, 1.4f);
             Check.True(slots * 5.2f >= 4.5f * 2f, "slots cover the screen");
+            int wide = PipeRunMath.SlotsFor(12f, 5.2f, 1.4f);
+            Check.True(wide > slots, "a wider play area needs more slots");
+            Check.True(wide * 5.2f >= 12f * 2f, "the wide play area stays covered");
+        }
+
+        [Test]
+        public static void PlayAreaIsAtLeastTheDesignFrame()
+        {
+            // Portrait 9:16 keeps the design width; a wide window reveals more world sideways and the pipes
+            // must be laid out across the visible width, or they would pop in inside the view.
+            Check.Near(DesignSpace.HalfWidth, Cameras.PortraitFraming.PlayHalfWidth(8f, 9f / 16f), 0.0001f,
+                "portrait keeps the design width");
+            Check.Near(8f * (16f / 9f), Cameras.PortraitFraming.PlayHalfWidth(8f, 16f / 9f), 0.001f, "wide window widens the area");
+            Check.Near(DesignSpace.HalfHeight, Cameras.PortraitFraming.PlayHalfHeight(8f), 0.0001f, "portrait keeps the height");
+            Check.Near(9f, Cameras.PortraitFraming.PlayHalfHeight(9f), 0.0001f, "a taller view raises the area");
         }
 
         [Test]
@@ -473,6 +562,58 @@ namespace FlappyCopy.Tests
             Check.False(pair.Sample(0f, 0f, 0.25f), "inside, not yet");
             Check.True(pair.Sample(1f, 0f, 0.25f), "cleared -> point");
             Check.False(pair.Sample(2f, 0f, 0.25f), "only once");
+        }
+
+        [Test]
+        public static void ScoringOnlyCountsWhilePlaying()
+        {
+            // A cleared pair adds a point through the game; the score service refuses points outside a run,
+            // so a late physics frame after the crash can never change the result.
+            var storage = new MemoryScoreStorage();
+            var score = new ScoreService(storage);
+            int points = 0;
+            score.ScoreChanged += value => points = value;
+
+            score.AddPoint();
+            Check.Equal(1, score.Score, "point added");
+            Check.Equal(1, points, "listeners hear it");
+
+            score.ResetRun();
+            Check.Equal(0, score.Score, "a new run starts from zero");
+            Check.Equal(0, storage.SaveCount, "the record is untouched before a run ends");
+        }
+
+        [Test]
+        public static void PipePassSensorReportsEveryClearedPairOnce()
+        {
+            // The sensor is what turns a cleared pair into a point: every pair of a run reports exactly one
+            // pass, and a pair that is sampled again afterwards does not report a second one.
+            var factory = new PairFactory();
+            var config = new PipeRunConfig(5.2f, 1.5f, 4.5f, 1.4f, 4, 4f);
+            var run = new PipeRun(factory, config, seed: 3);
+            Check.Equal(4, run.Count, "four pairs in the run");
+
+            // The first pair starts one spacing right of the play area, so it is the first one the bird meets.
+            Check.Near(config.ScreenRightEdge + config.Spacing, factory.Pairs[0].X, 0.0001f,
+                "lane starts one spacing right of the play area");
+            int passes = 0;
+            foreach (Pair pair in factory.Pairs)
+            {
+                float x = pair.X;
+                pair.Activate(x, 4f, 0f, new System.Random(1));
+
+                // The bird is sampled relative to the pair, whose column sits at x = 0: it enters the gap just
+                // left of the column and clears it once its right edge is past the column.
+                pair.Sample(-0.4f, 0f, 0.25f);
+                if (pair.Sample(0.3f, 0f, 0.25f))
+                {
+                    passes++;
+                }
+
+                pair.Sample(1f, 0f, 0.25f);
+            }
+
+            Check.Equal(factory.Pairs.Count, passes, "every pair scores exactly once");
         }
 
         [Test]
@@ -570,6 +711,23 @@ namespace FlappyCopy.Tests
                 Check.Near(World.ScrollMath.StripX(1, strip, offset), first + strip, 0.0001f, "strips sit side by side");
                 Check.True(first <= 0.0001f && first > -strip, "the first strip never leaves a gap on the left");
             }
+        }
+
+        [Test]
+        public static void LandingStopsRotationAndKeepsFalling()
+        {
+            // A crash only reports once; the vertical speed is kept so the bird keeps falling out of view.
+            var bird = new BirdKinematics(2.4f, 6.2f, 14f, 32f, -75f);
+            bird.PlaceAt(6f);
+            bird.Flap();
+            Check.True(bird.VelocityY > 0f, "flap lifts the bird");
+            for (int i = 0; i < 600; i++)
+            {
+                bird.Step(1f / 60f);
+            }
+
+            Check.True(bird.VelocityY <= -14f + 0.0001f, "the fall is capped");
+            Check.True(bird.Y < -8f, "the bird leaves the frame");
         }
 
         [Test]
