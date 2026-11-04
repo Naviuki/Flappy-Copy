@@ -3,9 +3,9 @@ using UnityEngine;
 namespace FlappyCopy.World
 {
     /// <summary>
-    /// Makes ground strips and full-width background pieces as wide as the visible screen. A sprite is
-    /// assumed to be one unit wide and anchored where the layout builder placed it, so width = screen
-    /// width keeps it covering the whole window on both 9:16 and wider screens.
+    /// Makes full-width background pieces (the sky, the horizon band) as wide as what the camera shows. A
+    /// sprite is one unit wide and anchored where the layout builder placed it, so width = camera width keeps
+    /// it covering the view on 9:16, on a wide window, in a browser page and on a phone.
     /// </summary>
     [DefaultExecutionOrder(50)]
     public sealed class ScreenFitter : MonoBehaviour
@@ -25,7 +25,7 @@ namespace FlappyCopy.World
 
         private void Update()
         {
-            if (Screen.width != lastWidth || Screen.height != lastHeight)
+            if (Cameras.ViewMetrics.Width != lastWidth || Cameras.ViewMetrics.Height != lastHeight)
             {
                 Apply();
             }
@@ -33,8 +33,8 @@ namespace FlappyCopy.World
 
         public void Apply()
         {
-            lastWidth = Screen.width;
-            lastHeight = Screen.height;
+            lastWidth = Cameras.ViewMetrics.Width;
+            lastHeight = Cameras.ViewMetrics.Height;
             Camera cam = targetCamera != null ? targetCamera : Camera.main;
             if (cam == null || pieces == null)
             {

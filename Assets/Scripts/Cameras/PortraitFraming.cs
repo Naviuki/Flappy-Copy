@@ -35,7 +35,9 @@ namespace FlappyCopy.Cameras
 
         private void Update()
         {
-            if (lastWidth != Screen.width || lastHeight != Screen.height)
+            // The page on WebGL and the device on mobile can change the frame on their own, so the metrics
+            // are read every frame (they are two integers).
+            if (lastWidth != ViewMetrics.Width || lastHeight != ViewMetrics.Height)
             {
                 Apply();
             }
@@ -49,8 +51,8 @@ namespace FlappyCopy.Cameras
                 return;
             }
 
-            lastWidth = Mathf.Max(1, Screen.width);
-            lastHeight = Mathf.Max(1, Screen.height);
+            lastWidth = ViewMetrics.Width;
+            lastHeight = ViewMetrics.Height;
             targetCamera.orthographic = true;
             targetCamera.orthographicSize = ComputeOrthographicSize(lastWidth, lastHeight);
         }

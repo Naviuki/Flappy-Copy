@@ -46,6 +46,12 @@ namespace FlappyCopy.EditorTools
 
             QualitySettings.vSyncCount = 1;
             Application.targetFrameRate = 60;
+
+            // WebGL: a portable build that runs from any static host. Brotli would need the server to send the
+            // matching Content-Encoding headers, so the archive is written uncompressed instead.
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+            PlayerSettings.WebGL.dataCaching = true;
+            PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
         }
 
         /// <summary>Writes a ProjectSettings.asset value by name (some player settings have no public API).</summary>

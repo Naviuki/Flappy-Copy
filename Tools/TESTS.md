@@ -1,7 +1,7 @@
 # EditMode tests
 
-`Assets/Tests/EditMode` (`FlappyCopy.Tests.EditMode`) holds plain NUnit EditMode tests. There are three ways to
-run them; all of them run the same `[Test]` methods.
+`Assets/Tests/EditMode` (`FlappyCopy.Tests.EditMode`) holds plain NUnit EditMode tests. There are two ways to
+run them; both run the same `[Test]` methods.
 
 ## 1. From the command line (used by CI, works headless)
 
@@ -27,13 +27,7 @@ tests. Every test in this project is a self-contained static method, so nothing 
 ## 2. From the Test Runner window
 
 Open the project in Unity 6000.5.1f1, then `Window > General > Test Runner > EditMode` and press **Run All**.
-
-## 3. Through the TestRunner API in a scripted editor
-
-`FlappyCopy.Tests.TestRunnerEntry.RunEditModeAndExit` starts the real Test Runner API (no `-batchmode`) and
-writes the same result files. It needs a windowed editor session and is the least reliable of the three on a
-machine where a scripted session has to compile scripts on startup: the run is scheduled with
-`EditorApplication.delayCall`, and a domain reload can drop it. Use path 1 for automation.
+Use `Tools\run_editmode_tests.ps1` (path 1) for automation.
 
 ## Fixtures
 

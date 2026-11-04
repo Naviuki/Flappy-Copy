@@ -20,6 +20,13 @@
 - 67 EditMode checks (lane wrapping, pair spacing, scoring while playing, the play area, the capped fall).
 - The self-test player also passes a live pair through the scene's scoring sensor and expects the point
   (`ClearingAPipeAddsAPoint`); it is stable across repeated portrait runs and in a wide window.
+- **Release script builds every installed platform** into `Builds/Release`: Windows x64 and Linux x64 archives,
+  WebGL and an Android APK when their build modules are installed. `VERSION.txt` lists each archive and the
+  platforms that were skipped or failed instead of hiding the ones that succeeded.
+- The WebGL build settings keep the game playable from any static host (no compression format that needs
+  special server headers); the camera, HUD, ground and pipes read the real screen size through `ViewMetrics`.
+- GitHub Actions workflows build and publish the release archives and run the tests in CI.
+- The project no longer pulls in the unused Unity module, and the old command-line harness helpers are gone.
 - README/CHANGELOG/TESTS updated, `Docs/gameplay.png` recaptured.
 
 ## 1.0.0 — release

@@ -1,3 +1,4 @@
+using FlappyCopy.Cameras;
 using FlappyCopy.Core;
 using FlappyCopy.Data;
 using FlappyCopy.Pooling;
@@ -82,7 +83,7 @@ namespace FlappyCopy.Pipes
 
         private void Update()
         {
-            if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight)
+            if (ViewMetrics.Width != lastScreenWidth || ViewMetrics.Height != lastScreenHeight)
             {
                 EnsureScreenCoverage();
             }
@@ -201,8 +202,8 @@ namespace FlappyCopy.Pipes
                 return;
             }
 
-            lastScreenWidth = Screen.width;
-            lastScreenHeight = Screen.height;
+            lastScreenWidth = ViewMetrics.Width;
+            lastScreenHeight = ViewMetrics.Height;
             int needed = Mathf.Max(prewarmCount,
                 PipeRunMath.SlotsFor(PlayHalfWidth(), worldSettings.PipeSpacing, worldSettings.SpawnOffsetFromRightEdge));
             if (needed <= poolSize)

@@ -3,8 +3,9 @@ using UnityEngine;
 namespace FlappyCopy.World
 {
     /// <summary>
-    /// Scales the ground strips so they always cover the visible width, and tells
-    /// <see cref="InfinityGround"/> about it. Works on 9:16 and on wider windows alike.
+    /// Keeps the ground strips as wide as the visible frame. The camera already frames the world
+    /// (<see cref="Cameras.PortraitFraming"/>); this only asks <see cref="InfinityGround"/> to cover that
+    /// frame when the window, the page (WebGL) or the device (mobile) changes size.
     /// </summary>
     [DefaultExecutionOrder(40)]
     public sealed class GroundFitter : MonoBehaviour
@@ -22,7 +23,7 @@ namespace FlappyCopy.World
 
         private void Update()
         {
-            if (Screen.width != lastWidth || Screen.height != lastHeight)
+            if (Cameras.ViewMetrics.Width != lastWidth || Cameras.ViewMetrics.Height != lastHeight)
             {
                 Apply();
             }
@@ -30,19 +31,9 @@ namespace FlappyCopy.World
 
         public void Apply()
         {
-            lastWidth = Screen.width;
-            lastHeight = Screen.height;
-            Camera cam = targetCamera != null ? targetCamera : Camera.main;
-            if (cam == null || ground == null)
-            {
-                return;
-            }
-
-            float width = (2f * cam.orthographicSize * cam.aspect) + 0.5f;
-            if (width > ground.StripWidth)
-            {
-                ground.SetStripWidth(width);
-            }
+            lastWidth = Cameras.ViewMetrics.Width;
+            lastHeight = Cameras.ViewMetrics.Height;
+            ground?.SetStripWidth(InfinityGround.VisibleWidth());
         }
     }
 }

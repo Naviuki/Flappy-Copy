@@ -1,0 +1,145 @@
+name: Release
+
+# Builds the game for every platform this project supports and publishes the archives as a GitHub release.
+#
+# Trigger:
+#   - manually (Actions > Release > Run workflow), or
+#   - by pushing a tag like v1.0.1
+#
+# WebGL runs on ubuntu (its build module is a Linux package), the desktop players run on Windows and the
+# Android APK on Linux, where Unity's bundled SDK/NDK produce a working Gradle build.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   UNITY_LICENSE  - the content of a Unity license file (Unity Hub > Manage licenses > Add > Manual activation
+#                    shows the .ulf file; on Linux/macOS keep only the <License> fragment of it)
+#   UNITY_EMAIL    - the Unity account e-mail
+#   UNITY_PASSWORD - the Unity account password
+# The containers below are made by game-ci and pin the editor version.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  UNITY_VERSION: 6000.5.1f1
+  TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', github.run_number) }}
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('Packages/packages-lock.json') }}
+      - name: Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneWindows64
+          buildMethod: FlappyCopy.EditorTools.ReleaseBuilder.BuildWindowsAndExit
+          allowDirtyBuild: true
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Flappy Copy
+          files: Builds/Release/FlappyCopy-Windows.zip
+          fail_on_unmatched_files: true
+
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('Packages/packages-lock.json') }}
+      - name: Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneLinux64
+          buildMethod: FlappyCopy.EditorTools.ReleaseBuilder.BuildLinuxAndExit
+          allowDirtyBuild: true
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Flappy Copy
+          files: Builds/Release/FlappyCopy-Linux.zip
+          fail_on_unmatched_files: true
+
+  webgl:
+    name: WebGL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-webgl-${{ hashFiles('Packages/packages-lock.json') }}
+      - name: Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: WebGL
+          buildMethod: FlappyCopy.EditorTools.ReleaseBuilder.BuildWebGLAndExit
+          allowDirtyBuild: true
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Flappy Copy
+          files: Builds/Release/FlappyCopy-WebGL.zip
+          fail_on_unmatched_files: true
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-android-${{ hashFiles('Packages/packages-lock.json') }}
+      - name: Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: Android
+          buildMethod: FlappyCopy.EditorTools.ReleaseBuilder.BuildAndroidAndExit
+          allowDirtyBuild: true
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Flappy Copy
+          files: Builds/Release/FlappyCopy-Android.apk
+          fail_on_unmatched_files: true

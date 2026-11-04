@@ -1,3 +1,4 @@
+using FlappyCopy.Cameras;
 using FlappyCopy.Core;
 using FlappyCopy.Data;
 using UnityEngine;
@@ -33,10 +34,8 @@ namespace FlappyCopy.World
         /// </summary>
         public static float VisibleWidth()
         {
-            float height = Screen.height > 0 ? Screen.height : DesignSpace.ReferenceWinHeight;
-            float width = Screen.width > 0 ? Screen.width : DesignSpace.ReferenceWinWidth;
             float design = DesignSpace.PortraitWidth / (float)DesignSpace.PortraitHeight;
-            float aspect = width / height;
+            float aspect = ViewMetrics.SafeAspect;
             float frameWidth = aspect > design ? DesignSpace.HalfHeight * 2f * aspect : DesignSpace.PortraitWidth;
             return Mathf.Max(frameWidth, DesignSpace.PortraitWidth);
         }

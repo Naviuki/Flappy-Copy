@@ -1,3 +1,4 @@
+using FlappyCopy.Cameras;
 using FlappyCopy.Core;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,14 +28,14 @@ namespace FlappyCopy.UI
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0f;
-            Apply(Screen.width, Screen.height);
+            Apply(ViewMetrics.Width, ViewMetrics.Height);
         }
 
         private void Update()
         {
-            if (Screen.width != lastWidth || Screen.height != lastHeight)
+            if (ViewMetrics.Width != lastWidth || ViewMetrics.Height != lastHeight)
             {
-                Apply(Screen.width, Screen.height);
+                Apply(ViewMetrics.Width, ViewMetrics.Height);
             }
         }
 

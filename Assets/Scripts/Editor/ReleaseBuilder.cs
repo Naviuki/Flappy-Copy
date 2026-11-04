@@ -10,33 +10,131 @@ using UnityEngine;
 namespace FlappyCopy.EditorTools
 {
     /// <summary>
-    /// Cuts a release build: validates the scene and assets, builds the Windows player, stages a release
-    /// folder (player, README, LICENSE, VERSION with SHA-256 hashes) and zips it.
-    /// Menu "Flappy Copy/Release/Build Windows Release"; CI -executeMethod FlappyCopy.EditorTools.ReleaseBuilder.BuildAndExit
+    /// Builds release players for every platform the installed editor supports and stages the archives:
+    /// <list type="bullet">
+    /// <item>Windows x64  → Builds/Release/FlappyCopy-Windows.zip</item>
+    /// <item>Linux x64    → Builds/Release/FlappyCopy-Linux.zip (a tarball is produced on Linux itself)</item>
+    /// <item>WebGL        → Builds/Release/FlappyCopy-WebGL.zip (a browser or a static host serves it)</item>
+    /// <item>Android      → Builds/Release/FlappyCopy-Android.apk (only with the Android module installed)</item>
+    /// </list>
+    /// A platform without its build support in the editor is skipped with a message, never treated as an
+    /// error: the release contains whatever this machine can build.
+    /// Menu "Flappy Copy/Release/Build All Platforms";
+    /// CI -executeMethod FlappyCopy.EditorTools.ReleaseBuilder.BuildAllAndExit.
     /// </summary>
     public static class ReleaseBuilder
     {
-        public const string PlayerPath = "Builds/Windows/FlappyCopy.exe";
-        public const string ReleaseRoot = "Builds/Release";
-        public const string ArchivePath = "Builds/FlappyCopy-Windows.zip";
+        public const string PackageRoot = "Builds/Release";
 
-        [MenuItem("Flappy Copy/Release/Build Windows Release")]
+        /// <summary>Where the players are built (Unity overwrites these folders on every build).</summary>
+        public const string StagingRoot = "Builds/Staging";
+
+        public const string ReleaseRoot = PackageRoot;
+
+        private const string ReadmePath = "Docs/Release-README.md";
+
+        /// <summary>Platforms in the order they are built and listed.</summary>
+        private static readonly ReleaseTarget[] Targets =
+        {
+            new ReleaseTarget("Windows", BuildTarget.StandaloneWindows64, "Windows x64 (Standalone)",
+                "Builds/Staging/Windows/FlappyCopy.exe", "FlappyCopy-Windows.zip", false),
+            new ReleaseTarget("Linux", BuildTarget.StandaloneLinux64, "Linux x64 (Standalone)",
+                "Builds/Staging/Linux/FlappyCopy.x86_64", "FlappyCopy-Linux.zip", false),
+            new ReleaseTarget("WebGL", BuildTarget.WebGL, "WebGL (browser)",
+                "Builds/Staging/WebGL", "FlappyCopy-WebGL.zip", true),
+            new ReleaseTarget("Android", BuildTarget.Android, "Android (APK)",
+                "Builds/Staging/Android/FlappyCopy.apk", "FlappyCopy-Android.apk", false)
+        };
+
+        [MenuItem("Flappy Copy/Release/Build All Platforms")]
         public static void BuildFromMenu()
         {
-            bool ok = BuildRelease();
+            int built = BuildAll();
             EditorUtility.DisplayDialog("Flappy Copy",
-                ok ? "Release built in " + ReleaseRoot + " and " + ArchivePath : "Release build failed, see the Console.",
+                built.ToString() + " platform archive(s) written to " + ReleaseRoot + ".",
                 "OK");
         }
 
-        public static void BuildAndExit()
+        public static void BuildAllAndExit()
         {
-            bool ok = BuildRelease();
-            EditorApplication.Exit(ok ? 0 : 1);
+            int built = BuildAll();
+            EditorApplication.Exit(built > 0 ? 0 : 1);
         }
 
-        public static bool BuildRelease()
+        /// <summary>Builds a single platform (command line: -executeMethod with -buildTarget already set).</summary>
+        private static int BuildOnly(string name, BuildTarget target)
         {
+            PlayerSetup.Apply();
+            AudioAssetBuilder.CreateAll();
+            AssetDatabase.SaveAssets();
+
+            var issues = ProjectValidator.Validate();
+            if (issues.Count > 0)
+            {
+                foreach (string issue in issues)
+                {
+                    Debug.LogError("[FlappyCopy] Release: " + issue);
+                }
+
+                return 0;
+            }
+
+            ReleaseTarget wanted = Array.Find(Targets, t => t.Target == target);
+            if (wanted == null || !BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Unknown, target))
+            {
+                Debug.LogWarning("[FlappyCopy] Release: " + name + " build support is not installed.");
+                return 0;
+            }
+
+            Directory.CreateDirectory(ReleaseRoot);
+            var report = new List<string>
+            {
+                "Flappy Copy " + PlayerSettings.bundleVersion,
+                "Platform: " + wanted.Platform,
+                "Unity: " + Application.unityVersion,
+                "Built: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'"),
+                string.Empty,
+                "SHA-256:"
+            };
+
+            if (!BuildOne(wanted, PlayerSettings.bundleVersion, report))
+            {
+                return 0;
+            }
+
+            File.WriteAllText(Path.Combine(ReleaseRoot, "VERSION-" + name + ".txt"), string.Join(Environment.NewLine, report.ToArray()));
+            return 1;
+        }
+
+        /// <summary>CI (one runner per platform): -executeMethod ...BuildWindowsAndExit.</summary>
+        public static void BuildWindowsAndExit()
+        {
+            EditorApplication.Exit(BuildOnly("Windows", BuildTarget.StandaloneWindows64) > 0 ? 0 : 1);
+        }
+
+        public static void BuildLinuxAndExit()
+        {
+            EditorApplication.Exit(BuildOnly("Linux", BuildTarget.StandaloneLinux64) > 0 ? 0 : 1);
+        }
+
+        public static void BuildWebGLAndExit()
+        {
+            EditorApplication.Exit(BuildOnly("WebGL", BuildTarget.WebGL) > 0 ? 0 : 1);
+        }
+
+        public static void BuildAndroidAndExit()
+        {
+            EditorApplication.Exit(BuildOnly("Android", BuildTarget.Android) > 0 ? 0 : 1);
+        }
+
+        /// <summary>Validates once, then builds and archives every supported platform. Returns the count built.</summary>
+        public static int BuildAll()
+        {
+            if (Directory.Exists(ReleaseRoot))
+            {
+                Directory.Delete(ReleaseRoot, true);
+            }
+
             PlayerSetup.Apply();
             AudioAssetBuilder.CreateAll();
             AssetDatabase.SaveAssets();
@@ -50,44 +148,14 @@ namespace FlappyCopy.EditorTools
             if (issues.Count > 0)
             {
                 Debug.LogError("[FlappyCopy] Release stopped: fix the validation issues first.");
-                return false;
+                return 0;
             }
 
-            if (!BuildScript.Build(BuildTarget.StandaloneWindows64, PlayerPath, false))
-            {
-                return false;
-            }
-
-            return StageRelease();
-        }
-
-        /// <summary>Copies the player into the release folder with its documentation and a hash list.</summary>
-        private static bool StageRelease()
-        {
-            string source = Path.GetFullPath(Path.GetDirectoryName(PlayerPath) ?? "Builds/Windows");
-            string root = Path.GetFullPath(ReleaseRoot);
-            string target = Path.Combine(root, "FlappyCopy-Windows");
-            if (Directory.Exists(root))
-            {
-                Directory.Delete(root, true);
-            }
-
-            CopyDirectory(source, target);
-
-            // Unity writes folder copies of debug data next to the player; they must not ship.
-            foreach (string folder in Directory.GetDirectories(target, "*", SearchOption.AllDirectories))
-            {
-                if ((folder.Contains("_BurstDebugInformation") || folder.Contains("_BackUpThisFolder"))
-                    && Directory.Exists(folder))
-                {
-                    Directory.Delete(folder, true);
-                }
-            }
-
+            Directory.CreateDirectory(ReleaseRoot);
+            string version = PlayerSettings.bundleVersion;
             var report = new List<string>
             {
-                "Flappy Copy " + PlayerSettings.bundleVersion,
-                "Build target: Windows x64 (Standalone)",
+                "Flappy Copy " + version,
                 "Unity: " + Application.unityVersion,
                 "Built: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'"),
                 "Input: legacy Input Manager (Space / mouse / touch)",
@@ -96,49 +164,126 @@ namespace FlappyCopy.EditorTools
                 "SHA-256:"
             };
 
-            string[] files = Directory.GetFiles(target, "*", SearchOption.AllDirectories);
-            Array.Sort(files, StringComparer.OrdinalIgnoreCase);
-            using (var sha = System.Security.Cryptography.SHA256.Create())
+            // One byte-identical README in the package: the root README is the bilingual project page and
+            // embeds screenshots that the archive does not need.
+            if (File.Exists(ReadmePath))
             {
-                foreach (string file in files)
+                File.Copy(ReadmePath, Path.Combine(ReleaseRoot, "README.md"), true);
+            }
+
+            if (File.Exists("LICENSE.md"))
+            {
+                File.Copy("LICENSE.md", Path.Combine(ReleaseRoot, "LICENSE.md"), true);
+            }
+
+            int built = 0;
+            foreach (ReleaseTarget target in Targets)
+            {
+                if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Unknown, target.Target))
                 {
-                    string hash = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(file))).Replace("-", string.Empty).ToLowerInvariant();
-                    report.Add(hash + "  " + Path.GetRelativePath(root, file).Replace('\\', '/'));
+                    string reason = target.Name + " skipped: build support not installed";
+                    Debug.Log("[FlappyCopy] Release: " + reason + ".");
+                    report.Add("SKIPPED: " + reason);
+                    continue;
                 }
-            }
 
-            File.WriteAllText(Path.Combine(root, "VERSION.txt"), string.Join(Environment.NewLine, report.ToArray()));
-            foreach (string doc in new[] { "README.md", "LICENSE.md" })
-            {
-                if (File.Exists(doc))
+                if (!BuildOne(target, version, report))
                 {
-                    File.Copy(doc, Path.Combine(root, doc), true);
+                    // One failing platform must not hide the archives that were produced: it is reported and
+                    // listed in VERSION.txt, the rest of the platforms still ship.
+                    Debug.LogWarning("[FlappyCopy] Release: " + target.Name + " failed to build");
+                    report.Add("FAILED: " + target.Name + " (see the build log)");
+                    continue;
                 }
+
+                built++;
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(ArchivePath) ?? "Builds");
-            if (File.Exists(ArchivePath))
+            File.WriteAllText(Path.Combine(ReleaseRoot, "VERSION.txt"), string.Join(Environment.NewLine, report.ToArray()));
+            Debug.Log("[FlappyCopy] Release finished: " + built + " platform(s) in " + ReleaseRoot + ".");
+            return built;
+        }
+
+        private static bool BuildOne(ReleaseTarget target, string version, List<string> report)
+        {
+            // A player build writes the executable next to its "<name>_Data" folder; the whole folder is what
+            // the archive holds, so a stale build with another name must not be packed into it.
+            string outputFolder = Path.HasExtension(target.Output) ? Path.GetDirectoryName(target.Output) ?? target.Output : target.Output;
+            if (Directory.Exists(outputFolder))
             {
-                File.Delete(ArchivePath);
+                Directory.Delete(outputFolder, true);
             }
 
-            ZipFile.CreateFromDirectory(root, Path.GetFullPath(ArchivePath), System.IO.Compression.CompressionLevel.Optimal, false);
-            Debug.Log("[FlappyCopy] Release staged in " + root + ", archive " + ArchivePath);
+            if (!BuildScript.Build(target.Target, target.Output, false))
+            {
+                return false;
+            }
+
+            string archive = Path.Combine(ReleaseRoot, target.Archive);
+            if (File.Exists(archive))
+            {
+                File.Delete(archive);
+            }
+
+            if (target.Output.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(target.Output, archive, true);
+            }
+            else
+            {
+                ZipOutput(target.Output, archive);
+            }
+
+            string hash = Sha256(archive);
+            report.Add(hash + "  " + target.Archive);
+            Debug.Log("[FlappyCopy] Release: " + target.Name + " -> " + archive + " (" + new FileInfo(archive).Length.ToString("N0") + " bytes)");
             return true;
         }
 
-        private static void CopyDirectory(string source, string target)
+        /// <summary>
+        /// Zips the build output: a player build writes the executable next to its _Data folder, a WebGL build
+        /// writes the whole game into its folder, so the folder of the output is what goes into the archive.
+        /// </summary>
+        private static void ZipOutput(string output, string archive)
         {
-            Directory.CreateDirectory(target);
-            foreach (string file in Directory.GetFiles(source))
+            string folder = Path.HasExtension(output) ? (Path.GetDirectoryName(output) ?? output) : output;
+            if (!Directory.Exists(folder))
             {
-                File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
+                throw new FileNotFoundException("Build output is missing.", folder);
             }
 
-            foreach (string directory in Directory.GetDirectories(source))
+            ZipFile.CreateFromDirectory(folder, archive, System.IO.Compression.CompressionLevel.Optimal, true);
+        }
+
+        private static string Sha256(string path)
+        {
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            using (FileStream stream = File.OpenRead(path))
             {
-                CopyDirectory(directory, Path.Combine(target, Path.GetFileName(directory)));
+                return BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", string.Empty).ToLowerInvariant();
             }
+        }
+
+        private sealed class ReleaseTarget
+        {
+            public ReleaseTarget(string name, BuildTarget target, string platform, string output, string archive, bool optional)
+            {
+                Name = name;
+                Target = target;
+                Platform = platform;
+                Output = output;
+                Archive = archive;
+                Optional = optional;
+            }
+
+            public string Name { get; }
+            public BuildTarget Target { get; }
+            public string Platform { get; }
+            public string Output { get; }
+            public string Archive { get; }
+
+            /// <summary>A platform that may legitimately be missing from a machine (WebGL on a desktop build).</summary>
+            public bool Optional { get; }
         }
     }
 }
