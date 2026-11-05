@@ -1,4 +1,4 @@
-# Unity generated folders
+# Unity generated folders and local outputs
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -15,6 +15,9 @@
 /.vs/
 /_TypeCheck/
 /UIElementsSchema/
+
+# A local checkout of the release archives (Tools/fetch_releases.ps1)
+/Releases/
 
 # Unity generated project files
 *.csproj

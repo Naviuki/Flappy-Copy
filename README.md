@@ -38,6 +38,7 @@ files from outside the repository.
 - **Unity 6.5** with the exact editor version `6000.5.1f1` (Unity Hub installs it).
 - To build a player: the matching build support module for the target platform
   (Windows, Linux, WebGL or Android).
+- No prior Unity experience is needed to play: the built players are attached to the releases.
 
 ### Run from the editor
 
@@ -75,6 +76,15 @@ prefabs and the scene, then validates.
 
 Player settings (applied by **Flappy Copy ▸ Apply Player Settings**): product name `Flappy Copy`, version
 `1.0.1`, 720×1280 windowed on desktop, portrait only on mobile, legacy Input Manager, URP 2D.
+
+Built players of the latest release are attached to the repository's releases; `Tools\fetch_releases.ps1`
+downloads them next to their notes (and their SHA-256 list) into the ignored `Releases\` folder.
+
+### Continuous integration
+
+`.github/workflows/release.yml` builds and publishes the archives for every platform on a `v*` tag (or by hand
+from the Actions tab); `.github/workflows/tests.yml` runs the EditMode suite on pushes and pull requests. Both
+need three repository secrets: `UNITY_LICENSE`, `UNITY_EMAIL` and `UNITY_PASSWORD`.
 
 ### Architecture
 
@@ -192,6 +202,7 @@ MIT — see [LICENSE.md](LICENSE.md). Unity Engine and URP are used under the Un
 
 - **Unity 6.5**, конкретная версия редактора `6000.5.1f1` (ставится через Unity Hub).
 - Для сборки плеера — модуль поддержки нужной платформы (Windows, Linux, WebGL или Android).
+- Опыт работы с Unity для запуска игры не нужен: готовые сборки приложены к релизам репозитория.
 
 ### Запуск в редакторе
 
@@ -226,6 +237,15 @@ MIT — see [LICENSE.md](LICENSE.md). Unity Engine and URP are used under the Un
   | Android | `Builds\Release\FlappyCopy-Android.apk` (портрет, API 26+) |
 
   В `Builds\Release\VERSION.txt` записаны версия и SHA-256 каждого архива.
+
+Готовые сборки последнего релиза приложены к релизам репозитория; `Tools\fetch_releases.ps1` скачивает их
+вместе с описанием (и списком SHA-256) в папку `Releases\` (она не попадает в git).
+
+### Непрерывная интеграция
+
+`.github/workflows/release.yml` собирает и прикладывает архивы всех платформ по тегу `v*` (или вручную из
+вкладки Actions); `.github/workflows/tests.yml` прогоняет набор EditMode на каждый push и pull request. Обоим
+нужны три секрета репозитория: `UNITY_LICENSE`, `UNITY_EMAIL` и `UNITY_PASSWORD`.
 
 Настройки плеера (применяются командой **Flappy Copy ▸ Apply Player Settings**): название `Flappy Copy`,
 версия `1.0.1`, окно 720×1280 на десктопе, только портретная ориентация на мобильных, старый Input Manager,
