@@ -39,9 +39,9 @@ The latest release ships a build for every platform the project can target:
 
 | Platform | Archive | How to run |
 |---|---|---|
-| Windows x64 | `FlappyCopy-Windows.zip` | unpack and run `FlappyCopy.exe` |
-| Linux x64 | `FlappyCopy-Linux.zip` | unpack, `chmod +x FlappyCopy.x86_64`, then run it |
-| WebGL | `FlappyCopy-WebGL.zip` | serve the unpacked folder with any static web server and open it in a browser |
+| Windows x64 | `FlappyCopy-Windows.zip` | unpack and run `Windows/FlappyCopy.exe` |
+| Linux x64 | `FlappyCopy-Linux.zip` | unpack, `chmod +x Linux/FlappyCopy.x86_64`, then run it |
+| WebGL | `FlappyCopy-WebGL.zip` | serve the unpacked `WebGL/` folder with any static web server and open it in a browser |
 | Android | `FlappyCopy-Android.apk` | install on Android 8.0+ (API 26) |
 
 Every archive keeps its build in a folder named after the platform (`Windows/`, `Linux/`, `WebGL/`), and
@@ -219,9 +219,9 @@ MIT — see [LICENSE.md](LICENSE.md). Unity Engine and URP are used under the Un
 
 | Платформа | Архив | Как запустить |
 |---|---|---|
-| Windows x64 | `FlappyCopy-Windows.zip` | распакуйте и запустите `FlappyCopy.exe` |
-| Linux x64 | `FlappyCopy-Linux.zip` | распакуйте, `chmod +x FlappyCopy.x86_64` и запустите |
-| WebGL | `FlappyCopy-WebGL.zip` | отдайте распакованную папку любым статическим веб-сервером и откройте в браузере |
+| Windows x64 | `FlappyCopy-Windows.zip` | распакуйте и запустите `Windows/FlappyCopy.exe` |
+| Linux x64 | `FlappyCopy-Linux.zip` | распакуйте, `chmod +x Linux/FlappyCopy.x86_64` и запустите |
+| WebGL | `FlappyCopy-WebGL.zip` | отдайте распакованную папку `WebGL/` любым статическим веб-сервером и откройте в браузере |
 | Android | `FlappyCopy-Android.apk` | установите на Android 8.0+ (API 26) |
 
 В каждом архиве сборка лежит в папке с именем платформы (`Windows/`, `Linux/`, `WebGL/`), а `VERSION.txt`
