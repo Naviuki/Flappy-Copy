@@ -33,6 +33,21 @@ files from outside the repository.
 | Restart after a crash | `R` |
 | Mute / unmute | **SOUND** button (top right) |
 
+### Downloads
+
+The latest release ships a build for every platform the project can target:
+
+| Platform | Archive | How to run |
+|---|---|---|
+| Windows x64 | `FlappyCopy-Windows.zip` | unpack and run `FlappyCopy.exe` |
+| Linux x64 | `FlappyCopy-Linux.zip` | unpack, `chmod +x FlappyCopy.x86_64`, then run it |
+| WebGL | `FlappyCopy-WebGL.zip` | serve the unpacked folder with any static web server and open it in a browser |
+| Android | `FlappyCopy-Android.apk` | install on Android 8.0+ (API 26) |
+
+Every archive keeps its build in a folder named after the platform (`Windows/`, `Linux/`, `WebGL/`), and
+`VERSION.txt` lists the SHA-256 of each file. The WebGL page fills the whole browser window at any aspect
+ratio, from a phone in portrait to a wide desktop screen.
+
 ### Requirements
 
 - **Unity 6.5** with the exact editor version `6000.5.1f1` (Unity Hub installs it).
@@ -69,7 +84,7 @@ prefabs and the scene, then validates.
   |---|---|
   | Windows x64 | `Builds\Release\FlappyCopy-Windows.zip` |
   | Linux x64 | `Builds\Release\FlappyCopy-Linux.zip` |
-  | WebGL | `Builds\Release\FlappyCopy-WebGL.zip` (serve the folder with any static web server) |
+  | WebGL | `Builds\Release\FlappyCopy-WebGL.zip` (the `FlappyCopy` project template fills the browser window; any static web server can host the folder) |
   | Android | `Builds\Release\FlappyCopy-Android.apk` (portrait, API 26+) |
 
   `Builds\Release\VERSION.txt` lists the version and the SHA-256 of every archive.
@@ -198,6 +213,21 @@ MIT — see [LICENSE.md](LICENSE.md). Unity Engine and URP are used under the Un
 | Рестарт после падения | `R` |
 | Выключить / включить звук | кнопка **SOUND** (справа сверху) |
 
+### Скачивание
+
+В последнем релизе собраны версии для всех платформ, которые поддерживает проект:
+
+| Платформа | Архив | Как запустить |
+|---|---|---|
+| Windows x64 | `FlappyCopy-Windows.zip` | распакуйте и запустите `FlappyCopy.exe` |
+| Linux x64 | `FlappyCopy-Linux.zip` | распакуйте, `chmod +x FlappyCopy.x86_64` и запустите |
+| WebGL | `FlappyCopy-WebGL.zip` | отдайте распакованную папку любым статическим веб-сервером и откройте в браузере |
+| Android | `FlappyCopy-Android.apk` | установите на Android 8.0+ (API 26) |
+
+В каждом архиве сборка лежит в папке с именем платформы (`Windows/`, `Linux/`, `WebGL/`), а `VERSION.txt`
+содержит SHA-256 всех файлов. Страница WebGL занимает всё окно браузера при любом соотношении сторон — от
+телефона в портретной ориентации до широкого монитора.
+
 ### Требования
 
 - **Unity 6.5**, конкретная версия редактора `6000.5.1f1` (ставится через Unity Hub).
@@ -233,7 +263,7 @@ MIT — see [LICENSE.md](LICENSE.md). Unity Engine and URP are used under the Un
   |---|---|
   | Windows x64 | `Builds\Release\FlappyCopy-Windows.zip` |
   | Linux x64 | `Builds\Release\FlappyCopy-Linux.zip` |
-  | WebGL | `Builds\Release\FlappyCopy-WebGL.zip` (папку можно отдавать любым статическим веб-сервером) |
+  | WebGL | `Builds\Release\FlappyCopy-WebGL.zip` (шаблон проекта `FlappyCopy` растягивает игру на всё окно; папку можно отдавать любым статическим веб-сервером) |
   | Android | `Builds\Release\FlappyCopy-Android.apk` (портрет, API 26+) |
 
   В `Builds\Release\VERSION.txt` записаны версия и SHA-256 каждого архива.

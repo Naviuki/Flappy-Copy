@@ -24,7 +24,9 @@
   WebGL and an Android APK when their build modules are installed. `VERSION.txt` lists each archive and the
   platforms that were skipped or failed instead of hiding the ones that succeeded.
 - The WebGL build settings keep the game playable from any static host (no compression format that needs
-  special server headers); the camera, HUD, ground and pipes read the real screen size through `ViewMetrics`.
+  special server headers), and the `FlappyCopy` WebGL template fills the browser window instead of the fixed
+  960×600 box of the stock one; the camera, HUD, ground and pipes read the real screen size through
+  `ViewMetrics`. The release ships all four builds: Windows x64, Linux x64, WebGL and the Android APK.
 - GitHub Actions workflows build and publish the release archives and run the tests in CI.
 - The project no longer pulls in the unused Unity module, and the old command-line harness helpers are gone.
 - README/CHANGELOG/TESTS updated, `Docs/gameplay.png` recaptured.

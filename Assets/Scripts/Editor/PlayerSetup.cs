@@ -49,6 +49,9 @@ namespace FlappyCopy.EditorTools
 
             // WebGL: a portable build that runs from any static host. Brotli would need the server to send the
             // matching Content-Encoding headers, so the archive is written uncompressed instead.
+            // The project template fills the browser window with the canvas; the stock one draws a fixed
+            // 960x600 box, which leaves the portrait game tiny inside scrollbars.
+            PlayerSettings.WebGL.template = "PROJECT:FlappyCopy";
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
             PlayerSettings.WebGL.dataCaching = true;
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;

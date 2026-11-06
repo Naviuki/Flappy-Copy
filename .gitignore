@@ -55,3 +55,6 @@ __pycache__/
 
 # Tool caches
 /.packages/
+
+# Unity test runner scratch folder
+/.utmp/

@@ -9,7 +9,7 @@ name: Release
 # WebGL runs on ubuntu (its build module is a Linux package), the desktop players run on Windows and the
 # Android APK on Linux, where Unity's bundled SDK/NDK produce a working Gradle build.
 #
-# Needs two repository secrets (Settings > Secrets and variables > Actions):
+# Needs three repository secrets (Settings > Secrets and variables > Actions):
 #   UNITY_LICENSE  - the content of a Unity license file (Unity Hub > Manage licenses > Add > Manual activation
 #                    shows the .ulf file; on Linux/macOS keep only the <License> fragment of it)
 #   UNITY_EMAIL    - the Unity account e-mail
